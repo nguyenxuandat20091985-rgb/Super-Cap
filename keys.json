@@ -1,0 +1,11 @@
+{
+  "status": "System Online",
+  "active_users": [
+    {
+      "id": "SC-8888",
+      "name": "Admin Test",
+      "expiry": "2026-12-31",
+      "plan": "Premium"
+    }
+  ]
+}
