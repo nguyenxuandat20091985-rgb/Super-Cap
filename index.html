@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER CAP - HỆ THỐNG TRỢ LÝ TÀI XẾ</title>
+    <style>
+        body { background: #0a0a0a; color: #00FFAB; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .container { border: 2px solid #00FFAB; border-radius: 25px; padding: 30px; background: #151515; box-shadow: 0 0 25px rgba(0,255,171,0.3); max-width: 350px; width: 90%; }
+        h1 { font-size: 35px; margin: 0; letter-spacing: 3px; font-style: italic; }
+        .status { font-size: 11px; color: #fff; background: #222; padding: 5px 15px; border-radius: 20px; display: inline-block; margin: 15px 0; border: 1px solid #333; }
+        .id-box { background: #000; padding: 20px; border-radius: 15px; border: 1px dashed #00FFAB; font-size: 26px; margin: 25px 0; color: #fff; font-weight: bold; font-family: monospace; }
+        .btn-pay { background: #00FFAB; color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; text-transform: uppercase; transition: 0.3s; }
+        .btn-pay:active { transform: scale(0.95); background: #00cc88; }
+        .footer { font-size: 11px; color: #555; margin-top: 30px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SUPER CAP</h1>
+        <div class="status">● HỆ THỐNG ĐANG TRỰC TUYẾN</div>
+        <p style="color: #aaa; font-size: 14px; margin-top: 0;">Tăng tỉ lệ nổ đơn Xanh SM, Grab, Be</p>
+        
+        <div style="margin-top: 30px; font-size: 13px; color: #00FFAB;">MÃ ID THIẾT BỊ CỦA BẠN:</div>
+        <div class="id-box" id="displayId">SC-WAIT...</div>
+        
+        <p style="font-size: 12px; color: #777; margin-bottom: 25px;">Gửi ID trên cho Admin Anh Hai để kích hoạt bản quyền Premium</p>
+        
+        <button class="btn-pay" onclick="copyAndAlert()">
+            SAO CHÉP ID & KÍCH HOẠT
+        </button>
+
+        <div class="footer">
+            Bản quyền thuộc về Anh Hai SM<br>
+            Thiết kế riêng cho VinFast VF8 & VF e34
+        </div>
+    </div>
+
+    <script>
+        // Tạo ID ngẫu nhiên cho khách hàng
+        const randomId = "SC-" + Math.floor(1000 + Math.random() * 9000);
+        const el = document.getElementById('displayId');
+        el.innerText = randomId;
+
+        function copyAndAlert() {
+            navigator.clipboard.writeText(randomId).then(() => {
+                alert('Đã copy mã ID: ' + randomId + '\nHãy gửi mã này kèm biên lai cho Anh Hai nhé!');
+            });
+        }
+    </script>
+</body>
+</html>
