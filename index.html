@@ -33,13 +33,18 @@
     </div>
 
     <script>
+        // Link Firebase chuẩn của anh Đạt
         const FB_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
+        
         async function fetchCustomers() {
             try {
                 const res = await fetch(FB_URL);
                 const data = await res.json();
                 const list = document.getElementById('customer-list');
+                const status = document.getElementById('status-text');
+                
                 if (data) {
+                    status.innerText = "ĐANG HOẠT ĐỘNG";
                     list.innerHTML = "";
                     Object.keys(data).reverse().forEach(k => {
                         const item = document.createElement('div');
@@ -47,9 +52,16 @@
                         item.innerHTML = `<strong>🚕 KHÁCH:</strong> ${data[k].info || 'Cuốc mới'}`;
                         list.appendChild(item);
                     });
-                } else { list.innerHTML = "Chưa có cuốc mới..."; }
-            } catch (e) { document.getElementById('status-text').innerText = "LỖI KẾT NỐI"; }
+                } else { 
+                    status.innerText = "RADAR TRỐNG";
+                    list.innerHTML = "Chưa có cuốc mới..."; 
+                }
+            } catch (e) { 
+                document.getElementById('status-text').innerText = "LỖI KẾT NỐI"; 
+            }
         }
+        
+        // Tự động cập nhật mỗi 3 giây
         setInterval(fetchCustomers, 3000);
         fetchCustomers();
     </script>
