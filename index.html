@@ -3,43 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPER CAP 2026</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>RADAR MAP SUPER CAP 2026</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
-        body { background-color: #050f12; color: #00f2ff; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .radar { width: 250px; height: 250px; border: 2px solid #004d55; border-radius: 50%; margin: 20px auto; position: relative; background: radial-gradient(circle, #002d32 0%, #050f12 80%); }
-        .line { width: 50%; height: 2px; background: linear-gradient(to right, transparent, #00f2ff); position: absolute; top: 50%; left: 50%; transform-origin: left center; animation: scan 2s linear infinite; }
-        @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .box { background: #101d23; padding: 15px; border-radius: 15px; border: 1px solid #004d55; margin-top: 10px; }
-        .item { background: #002d32; padding: 12px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #ffeb3b; text-align: left; animation: nổ 0.5s ease; }
-        @keyframes nổ { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        body, html { margin: 0; padding: 0; height: 100%; background: #0a0a0a; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        
+        /* Bản đồ nền */
+        #map { width: 100%; height: 100%; z-index: 1; }
+
+        /* Lớp phủ Radar gọn gàng ở góc */
+        .radar-container {
+            position: absolute; top: 20px; right: 20px;
+            width: 120px; height: 120px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%; border: 2px solid #00f2ff;
+            z-index: 10; overflow: hidden; pointer-events: none;
+        }
+        .beam {
+            width: 100%; height: 100%;
+            background: conic-gradient(from 0deg, transparent 80%, rgba(0, 242, 255, 0.5) 100%);
+            animation: spin 2s linear infinite; border-radius: 50%;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Bảng danh sách cuốc xe nổ */
+        .status-panel {
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            background: rgba(0, 20, 30, 0.85);
+            border-left: 5px solid #00f2ff; border-radius: 10px;
+            padding: 15px; z-index: 10; color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-height: 150px; overflow-y: auto;
+        }
+        .customer-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 8px; padding: 10px; border-radius: 5px;
+            animation: blink 1s infinite alternate;
+        }
+        @keyframes blink { from { border: 1px solid transparent; } to { border: 1px solid #00f2ff; } }
+        
+        .header {
+            position: absolute; top: 20px; left: 20px;
+            z-index: 10; color: #00f2ff; text-shadow: 2px 2px 5px #000;
+            margin: 0; font-size: 20px; font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h2 style="text-shadow: 0 0 10px #00f2ff;">📡 RADAR SUPER CAP 2026</h2>
-    <div class="radar"><div class="line"></div></div>
-    <div class="box">
-        <p>📡 Trạng thái: <span id="status" style="color: #4caf50;">ĐANG QUÉT KHÁCH...</span></p>
-        <h3 style="margin: 5px 0;"><i class="fas fa-bolt"></i> CUỐC MỚI NỔ</h3>
-        <div id="list">Đang đợi tín hiệu từ Firebase...</div>
+
+    <h1 class="header">🛰️ HỆ THỐNG GIÁM SÁT SUPER CAP</h1>
+
+    <div class="radar-container">
+        <div class="beam"></div>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="status-panel" id="customer-list">
+        <div style="color: #aaa;">Đang quét tín hiệu khách hàng...</div>
     </div>
 
     <script>
-        const URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
-        async function load() {
-            try {
-                const r = await fetch(URL);
-                const d = await r.json();
-                const l = document.getElementById('list');
-                if (d) {
-                    l.innerHTML = "";
-                    Object.keys(d).reverse().forEach(k => {
-                        l.innerHTML += `<div class="item"><strong>🚕 KHÁCH:</strong> ${d[k].info || 'Cuốc nổ từ hệ thống'}</div>`;
-                    });
-                } else { l.innerHTML = "Chưa có cuốc mới..."; }
-            } catch (e) { document.getElementById('status').innerText = "LỖI KẾT NỐI"; }
-        }
-        setInterval(load, 3000); load();
+        // 1. Cấu hình Firebase của anh Đạt
+        const firebaseConfig = {
+            databaseURL: "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. Khởi tạo bản đồ (Mặc định ở Hà Nội)
+        var map = L.map('map').setView([21.0285, 105.8542], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Biểu tượng xe khách
+        var carIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/744/744465.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20]
+        });
+
+        // 3. Lắng nghe dữ liệu từ Firebase
+        db.ref('customers').on('value', (snapshot) => {
+            const listDiv = document.getElementById('customer-list');
+            listDiv.innerHTML = ""; // Xóa danh sách cũ
+            
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const customer = data[key];
+                    
+                    // Thêm vào danh sách bên dưới
+                    const item = document.createElement('div');
+                    item.className = 'customer-item';
+                    item.innerHTML = `⚡ <b>KHÁCH MỚI:</b> ${customer.info || "Đang cập nhật..."}`;
+                    listDiv.prepend(item);
+
+                    // Nếu có tọa độ thì vẽ lên bản đồ
+                    if (customer.lat && customer.lng) {
+                        L.marker([customer.lat, customer.lng], {icon: carIcon})
+                            .addTo(map)
+                            .bindPopup(customer.info)
+                            .openPopup();
+                        map.flyTo([customer.lat, customer.lng], 15);
+                    }
+                });
+                
+                // Tiếng chuông báo khi có khách
+                var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play();
+            } else {
+                listDiv.innerHTML = "Đang quét tín hiệu khách hàng...";
+            }
+        });
     </script>
 </body>
 </html>
