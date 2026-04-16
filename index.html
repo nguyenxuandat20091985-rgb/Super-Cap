@@ -5,159 +5,131 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SUPER-CAP V2 - ANHHAIC2</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     
     <style>
-        :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --bg: #f8faf9; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg); overflow: hidden; }
+        :root { --primary: #00bfa5; --dark: #013a33; --gold: #ffc107; --bg: #f4f7f6; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Lexend', sans-serif; background: var(--bg); overflow: hidden; }
         
-        /* Bản đồ Full màn hình */
-        #map { height: 100vh; width: 100vw; z-index: 1; background: #e5e3df; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* MÀN HÌNH ĐĂNG KÝ/ĐĂNG NHẬP CHUYÊN NGHIỆP */
-        .auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
-        .auth-card { background: white; padding: 30px; border-radius: 30px; width: 85%; max-width: 380px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; }
-        .auth-card h2 { color: var(--primary); margin-bottom: 5px; font-weight: 900; }
-        .auth-card input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1.5px solid #eee; font-size: 16px; box-sizing: border-box; outline: none; }
-        .auth-card input:focus { border-color: var(--primary); }
-        .btn-login { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 800; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        /* MÀN HÌNH ĐĂNG NHẬP XANH SM STYLE */
+        .auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .auth-card { background: white; padding: 40px 30px; border-radius: 40px; width: 88%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; }
+        .auth-card h1 { color: var(--primary); font-size: 24px; margin-bottom: 10px; font-weight: 900; }
+        .auth-card input { width: 100%; padding: 18px; margin: 12px 0; border-radius: 15px; border: 2px solid #f0f0f0; font-size: 16px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        .auth-card input:focus { border-color: var(--primary); background: #f0fffb; }
+        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 20px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 8px 20px rgba(0,191,165,0.3); }
 
-        /* HEADER & FOOTER */
-        .header { position: fixed; top: 15px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 1000; pointer-events: none; }
-        .badge { background: white; padding: 10px 18px; border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 12px; font-weight: 800; pointer-events: auto; }
-        
-        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 30px 30px 0 0; padding: 15px 15px 25px 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); }
-        .nav-grid { display: flex; justify-content: space-around; }
-        .nav-item { border: none; background: none; color: #bdc3c7; font-size: 11px; font-weight: 700; flex: 1; cursor: pointer; }
+        /* HEADER UI */
+        .header { position: fixed; top: env(safe-area-inset-top, 20px); left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 1000; }
+        .status-badge { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 20px; border-radius: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; border: 1px solid rgba(0,191,165,0.2); }
+        .dot { height: 10px; width: 10px; background: #00e676; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
+
+        /* FOOTER UI */
+        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 35px 35px 0 0; padding: 20px 20px 40px 20px; box-shadow: 0 -10px 40px rgba(0,0,0,0.12); }
+        .nav-grid { display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { border: none; background: none; color: #a0aec0; font-size: 12px; font-weight: 700; flex: 1; transition: 0.3s; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 24px; display: block; margin-bottom: 4px; font-style: normal; }
+        .nav-item i { font-size: 26px; display: block; margin-bottom: 5px; font-style: normal; }
 
-        /* MENU VIP */
-        .vip-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 4000; display: none; flex-direction: column; }
-        .vip-header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 30px 30px; }
-        .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; overflow-y: auto; }
-        .vip-card { background: white; border: 2px solid #f0f0f0; border-radius: 20px; padding: 15px; text-align: center; }
-        .vip-card b { font-size: 15px; display: block; margin-bottom: 5px; }
-        .vip-card span { color: var(--primary); font-weight: 800; font-size: 18px; }
+        /* MARKER XE 3D */
+        .driver-indicator { width: 40px; height: 40px; background: rgba(0,191,165,0.2); border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .driver-core { width: 18px; height: 18px; background: var(--primary); border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px var(--primary); }
 
-        /* Custom Marker cho tài xế */
-        .driver-marker { background: var(--primary); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 15px var(--primary); }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); } }
     </style>
 </head>
 <body>
 
     <div id="authScreen" class="auth-screen">
         <div class="auth-card">
-            <h2>XANH SM PREMIUM</h2>
-            <p style="color: #666; font-size: 13px;">Hệ thống Super-Cap điều phối khách AI</p>
-            <input type="number" id="loginPhone" placeholder="Số điện thoại tài xế">
-            <input type="text" id="loginPlate" placeholder="Biển số xe (VD: 30K-123.45)">
-            <button class="btn-login" onclick="login()">ĐĂNG NHẬP HỆ THỐNG</button>
-            <p style="font-size: 11px; margin-top: 15px; color: #999;">© 2026 Developed by Anhhaic2</p>
+            <h1>XANH SM PREMIUM</h1>
+            <p style="color: #718096; margin-bottom: 20px;">Hệ thống Super-Cap AI 2026</p>
+            <input type="number" id="scPhone" placeholder="Số điện thoại tài xế">
+            <input type="text" id="scPlate" placeholder="Biển số xe (VD: 30K-12345)">
+            <button class="btn-main" onclick="handleAuth()">ĐĂNG NHẬP NGAY</button>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: 20px;">Phiên bản Pro Max - Anhhaic2</p>
         </div>
     </div>
 
     <div class="header">
-        <div class="badge" id="idDisplay">🆔 SC-GUEST</div>
-        <div class="badge" id="vipDisplay" style="color:var(--gold)">⭐ GÓI: FREE</div>
+        <div class="status-badge"><span class="dot"></span> <span id="userPlate">ĐANG TẢI...</span></div>
+        <div class="status-badge" style="color: var(--gold)">🏆 VIP PRO</div>
     </div>
 
     <div id="map"></div>
 
     <div class="footer-panel">
-        <div style="text-align:center; font-size:12px; font-weight:700; color:var(--primary); margin-bottom:10px;">
-            📡 TRẠNG THÁI: <span id="statusText">ĐANG ĐỊNH VỊ...</span>
+        <div style="text-align:center; font-size:14px; font-weight:800; color:var(--primary); margin-bottom:15px; letter-spacing: 1px;">
+            📡 TRẠNG THÁI: <span id="radarStatus" style="color: var(--dark)">ĐANG DÒ KHÁCH...</span>
         </div>
         <div class="nav-grid">
-            <button class="nav-item active" onclick="closeVip()"><i>🏠</i>Trang chủ</button>
-            <button class="nav-item" onclick="openVip()"><i>💰</i>Nạp VIP</button>
+            <button class="nav-item active"><i>🏠</i>Trang chủ</button>
+            <button class="nav-item" onclick="alert('Mở Menu Nạp VIP BIDV')"><i>💰</i>Nạp VIP</button>
             <button class="nav-item" onclick="location.reload()"><i>🔄</i>Cập nhật</button>
         </div>
     </div>
 
-    <div id="vipMenu" class="vip-menu">
-        <div class="vip-header">
-            <h2 style="margin:0">NÂNG CẤP VIP</h2>
-            <p style="font-size: 13px; opacity: 0.9;">Tăng tốc nổ cuốc lên 200%</p>
-            <button onclick="closeVip()" style="position:absolute; top:20px; left:20px; background:none; border:none; color:white; font-size:24px;">✕</button>
-        </div>
-        <div class="vip-grid">
-            <div class="vip-card"><b>CHUYẾN LẺ</b><span>5.000đ</span><button class="btn-login" style="padding:8px; font-size:12px;" onclick="pay(5000,'CHUYEN LE')">NẠP</button></div>
-            <div class="vip-card" style="border-color:var(--primary)"><b>GÓI PRO</b><span>49.000đ</span><button class="btn-login" style="padding:8px; font-size:12px;" onclick="pay(49000,'GOI PRO')">NẠP</button></div>
-            <div class="vip-card"><b>PRO MAX</b><span>129.000đ</span><button class="btn-login" style="padding:8px; font-size:12px;" onclick="pay(129000,'PRO MAX')">NẠP</button></div>
-            <div class="vip-card"><b>DÙNG THỬ</b><span>Miễn phí</span><button class="btn-login" style="background:#ccc; padding:8px; font-size:12px;">HẾT HẠN</button></div>
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const MY_STK = "4430269669";
-        const MY_NAME = "NGUYEN XUAN DAT";
-        var map, driverMarker;
+        let map, driverMarker;
+        const MY_STK = "4430269669"; //
 
-        // Khởi tạo bản đồ Google Maps (Lấy layer từ Google cho nét)
-        map = L.map('map', { zoomControl: false }).setView([20.95, 107.07], 13);
-        L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-            maxZoom: 20,
-            subdomains:['mt0','mt1','mt2','mt3']
-        }).addTo(map);
-
-        // KIỂM TRA ĐĂNG NHẬP
-        let user = JSON.parse(localStorage.getItem('sc_user'));
-        if(user) {
+        // 1. KIỂM TRA ĐĂNG NHẬP
+        let userData = JSON.parse(localStorage.getItem('sc_session'));
+        if(userData) {
             document.getElementById('authScreen').style.display = 'none';
             initApp();
         }
 
-        function login() {
-            const phone = document.getElementById('loginPhone').value;
-            const plate = document.getElementById('loginPlate').value;
-            if(!phone || !plate) return alert("Vui lòng nhập đầy đủ thông tin!");
+        function handleAuth() {
+            const phone = document.getElementById('scPhone').value;
+            const plate = document.getElementById('scPlate').value;
+            if(phone.length < 10 || !plate) return alert("Vui lòng điền đủ thông tin!");
             
-            user = { id: 'SC' + phone.slice(-4), phone: phone, plate: plate, vip: 'FREE' };
-            localStorage.setItem('sc_user', JSON.stringify(user));
+            userData = { id: 'SC'+phone.slice(-4), phone: phone, plate: plate };
+            localStorage.setItem('sc_session', JSON.stringify(userData));
             document.getElementById('authScreen').style.display = 'none';
             initApp();
         }
 
         function initApp() {
-            document.getElementById('idDisplay').innerText = "🆔 " + user.id;
-            document.getElementById('statusText').innerText = "ĐANG QUÉT KHÁCH...";
-            startLocationTracking();
+            document.getElementById('userPlate').innerText = userData.plate;
+            
+            // 2. KHỞI TẠO BẢN ĐỒ 3D (Dùng Style sáng mượt như Xanh SM)
+            map = new maplibregl.Map({
+                container: 'map',
+                style: 'https://demotiles.maplibre.org/style.json', // Có thể thay bằng Mapbox/Maptiler để nét hơn nữa
+                center: [107.07, 20.95], 
+                zoom: 15,
+                pitch: 45, // Độ nghiêng 3D
+                bearing: 0
+            });
+
+            startTracking();
         }
 
-        // ĐỊNH VỊ SIÊU CHÍNH XÁC
-        function startLocationTracking() {
+        // 3. ĐỊNH VỊ CHUYÊN NGHIỆP
+        function startTracking() {
             if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(position => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
+                navigator.geolocation.watchPosition(pos => {
+                    const coords = [pos.coords.longitude, pos.coords.latitude];
                     
                     if (!driverMarker) {
-                        driverMarker = L.circleMarker([lat, lng], {
-                            radius: 10,
-                            fillColor: "#00bfa5",
-                            color: "#fff",
-                            weight: 3,
-                            fillOpacity: 1
-                        }).addTo(map).bindPopup("Vị trí của anh").openPopup();
+                        const el = document.createElement('div');
+                        el.className = 'driver-indicator';
+                        el.innerHTML = '<div class="driver-core"></div>';
+                        
+                        driverMarker = new maplibregl.Marker(el)
+                            .setLngLat(coords)
+                            .addTo(map);
                     } else {
-                        driverMarker.setLatLng([lat, lng]);
+                        driverMarker.setLngLat(coords);
                     }
-                    map.panTo([lat, lng]);
-                }, err => {
-                    alert("Hãy bật GPS để hệ thống định vị được anh!");
-                }, { enableHighAccuracy: true });
+                    map.flyTo({ center: coords, speed: 0.8 });
+                }, null, { enableHighAccuracy: true });
             }
-        }
-
-        function openVip() { document.getElementById('vipMenu').style.display = 'flex'; }
-        function closeVip() { document.getElementById('vipMenu').style.display = 'none'; }
-
-        function pay(amount, name) {
-            const code = `NAP ${name.replace(' ','')} ${user.id}`;
-            const qrUrl = `https://img.vietqr.io/image/BIDV-${MY_STK}-compact2.png?amount=${amount}&addInfo=${code}&accountName=${MY_NAME}`;
-            window.open(qrUrl, '_blank');
         }
     </script>
 </body>
