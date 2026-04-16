@@ -3,93 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPER CAP - HỆ THỐNG SĂN KHÁCH ANH HAI SM</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>SUPER CAP 2026</title>
     <style>
-        :root { --main-color: #00f2ff; --bg-dark: #0a0a0a; --card-bg: #161616; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
-        #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        .payment-card { background: var(--card-bg); border: 2px solid #ff4444; padding: 20px; border-radius: 20px; max-width: 350px; }
-        .header { background: linear-gradient(180deg, #003336 0%, transparent 100%); padding: 20px; text-align: center; border-bottom: 1px solid var(--main-color); }
-        .radar-container { position: relative; height: 300px; background: radial-gradient(circle, #003336 0%, #0a0a0a 100%); overflow: hidden; }
-        .radar-sweep { position: absolute; inset: 0; background: conic-gradient(from 0deg, transparent, var(--main-color)); opacity: 0.1; animation: sweep 4s linear infinite; }
-        @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .map-overlay { position: absolute; inset: 0; padding: 10px; }
-        .customer-point { position: absolute; width: 15px; height: 15px; background: #ffea00; border-radius: 50%; box-shadow: 0 0 20px #ffea00; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
-        .info-panel { padding: 15px; }
-        .btn-action { background: var(--main-color); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; }
+        body { background-color: #0a191e; color: #80deea; font-family: sans-serif; text-align: center; margin: 0; padding: 20px; }
+        h1 { color: #4dd0e1; margin-bottom: 5px; }
+        .radar-container { width: 300px; height: 300px; border: 2px solid #006064; border-radius: 50%; margin: 20px auto; position: relative; background: radial-gradient(circle, #002d32 0%, #0a191e 70%); overflow: hidden; }
+        .scan-line { width: 50%; height: 2px; background: linear-gradient(to right, rgba(0,255,255,0), #00bcd4); position: absolute; top: 50%; left: 50%; transform-origin: left center; animation: scan 3s linear infinite; }
+        @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .status-box { background: #1a2a30; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #004d40; }
+        .customer-item { background: #002d32; padding: 10px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #ffeb3b; text-align: left; animation: flash 1s infinite alternate; }
+        @keyframes flash { from { opacity: 1; } to { opacity: 0.7; } }
+        #status-text { color: #4caf50; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="lock-screen">
-        <div class="payment-card">
-            <h2 style="color:#ff4444">HẾT HẠN SỬ DỤNG</h2>
-            <p>Vui lòng chuyển khoản để kích hoạt Radar</p>
-            <img src="https://img.vietqr.io/image/bidv-4430269669-compact2.jpg?amount=99000&addInfo=KichHoatSuperCap" style="width:200px; border-radius:10px;">
-            <p><b>NGUYEN XUAN DAT</b><br>4430269669 (BIDV)</p>
-            <button class="btn-action" onclick="window.open('https://zalo.me/s/xxxxxxxx')">XÁC NHẬN ĐÃ CHUYỂN</button>
-        </div>
-    </div>
-
-    <div class="header">
-        <h1 style="margin:0; color:var(--main-color);">SUPER CAP 2026</h1>
-        <p>HỆ THỐNG SĂN KHÁCH ANH HAI SM</p>
-    </div>
-
+    <h1>SUPER CAP 2026</h1>
+    <p>HỆ THỐNG SĂN KHÁCH ANH HAI SM</p>
+    
     <div class="radar-container">
-        <div class="radar-sweep"></div>
-        <div id="map" class="map-overlay"></div>
+        <div class="scan-line"></div>
+        <div id="radar-dots"></div>
     </div>
 
-    <div class="info-panel">
-        <div style="background: #222; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-            <p id="user-status"><i class="fas fa-wifi"></i> Đang kết nối Radar...</p>
-        </div>
-        <h3><i class="fas fa-crosshairs"></i> KHÁCH ĐANG CHỜ (THỰC TẾ)</h3>
-        <div id="customer-list"></div>
+    <div class="status-box">
+        <p>📡 Trạng thái: <span id="status-text">ĐANG KẾT NỐI...</span></p>
+        <h3>🎯 KHÁCH ĐANG CHỜ (THỰC TẾ)</h3>
+        <div id="customer-list">Đang quét tìm khách quanh đây...</div>
     </div>
 
     <script>
+        // LINK FIREBASE CHUẨN CỦA ANH ĐẠT
         const FB_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
 
-            fetch(FB_URL)
-            .then(res => res.json())
-            .then(data => {
-                const map = document.getElementById('map');
+        async function fetchCustomers() {
+            try {
+                const response = await fetch(FB_URL);
+                const data = await response.json();
                 const list = document.getElementById('customer-list');
-                map.innerHTML = '';
-                list.innerHTML = '';
-
-                if (!data) {
-                    list.innerHTML = '<p style="opacity:0.5">Đang quét tìm khách quanh đây...</p>';
-                    return;
+                const status = document.getElementById('status-text');
+                
+                if (data) {
+                    status.innerText = "RADAR ĐANG HOẠT ĐỘNG";
+                    status.style.color = "#4caf50";
+                    list.innerHTML = "";
+                    Object.keys(data).forEach(key => {
+                        const item = document.createElement('div');
+                        item.className = 'customer-item';
+                        item.innerHTML = `<strong>🚕 MỚI:</strong> ${data[key].info}`;
+                        list.appendChild(item);
+                    });
+                } else {
+                    status.innerText = "RADAR TRỐNG";
+                    list.innerHTML = "Chưa có cuốc mới, đang chờ nổ...";
                 }
-
-                Object.values(data).forEach(c => {
-                    // Hiện chấm vàng trên Radar
-                    const dot = document.createElement('div');
-                    dot.className = 'customer-point';
-                    dot.style.top = Math.floor(Math.random() * 80 + 10) + "%";
-                    dot.style.left = Math.floor(Math.random() * 80 + 10) + "%";
-                    map.appendChild(dot);
-
-                    // Hiện danh sách cuốc
-                    const item = document.createElement('div');
-                    item.style.padding = "10px";
-                    item.style.borderBottom = "1px solid #333";
-                    item.innerHTML = `<i class="fas fa-map-marker-alt" style="color:#ffea00"></i> ${c.info || 'Khách vãng lai'}`;
-                    list.appendChild(item);
-                });
-                document.getElementById('user-status').innerHTML = `<i class="fas fa-check-circle" style="color:#00ff00"></i> RADAR ĐANG HOẠT ĐỘNG`;
-            })
-            .catch(err => console.log("Chưa có dữ liệu khách"));
+            } catch (error) {
+                console.error("Lỗi kết nối:", error);
+            }
         }
 
-        // Cứ 3 giây quét khách mới 1 lần
-        setInterval(updateRadar, 3000);
-        updateRadar();
+        // Cập nhật dữ liệu mỗi 3 giây
+        setInterval(fetchCustomers, 3000);
+        fetchCustomers();
     </script>
 </body>
 </html>
