@@ -1,53 +1,49 @@
-// CẤU HÌNH AI THỢ SĂN KHÁCH - ANHHAIC2
-const AI_HUNTER_CONFIG = {
-    scanRadius: 5, // Quét bán kính 5km quanh Hạ Long
-    checkInterval: 7000, // 7 giây quét tìm khách một lần
-    minPrice: 50000, // Chỉ săn cuốc trên 50k
+// AI THỢ SĂN KHÁCH V4.0 - SÀN GIAO DỊCH CUỐC XE
+const AI_MARKET = {
+    minWait: 45000, // 45 giây nổ 1 khách
+    maxWait: 180000, // Tối đa 3 phút
+    phonePrefix: ['091', '098', '090', '034', '035', '086', '077'],
+    destinations: [
+        "Cầu Bãi Cháy", "Chợ Hạ Long 2", "Bệnh viện Tỉnh", 
+        "Cảng Cái Lân", "Khu đô thị Mon Bay", "Cột 8", "Tuần Châu"
+    ]
 };
 
-// Danh sách các điểm tập trung khách tại Hạ Long (Dữ liệu AI)
-const hotspots = [
-    { name: "Vincom Shophouse Hạ Long", lat: 20.958, lng: 107.073, type: "VIP" },
-    { name: "Chợ Đêm Bãi Cháy", lat: 20.948, lng: 107.035, type: "NORMAL" },
-    { name: "Cảng tàu khách quốc tế", lat: 20.942, lng: 107.062, type: "AIRPORT" },
-    { name: "Sun World Ha Long", lat: 20.951, lng: 107.045, type: "VIP" }
-];
-
-function initAIHunter() {
-    console.log("AI Thợ săn khách đã sẵn sàng...");
-    
-    // Vòng lặp quét khách
-    setInterval(() => {
-        const luck = Math.random();
-        // Nếu may mắn > 0.6 và đã nạp VIP thì mới nổ cuốc
-        if (luck > 0.6) {
-            const target = hotspots[Math.floor(Math.random() * hotspots.length)];
-            const price = Math.floor(Math.random() * (500 - 100 + 1) + 100) + ".000đ";
-            showCustomerAlert(target, price);
-        }
-    }, AI_HUNTER_CONFIG.checkInterval);
+function generateRandomPhone() {
+    let prefix = AI_MARKET.phonePrefix[Math.floor(Math.random() * AI_MARKET.phonePrefix.length)];
+    let suffix = Math.floor(1000000 + Math.random() * 9000000).toString().substring(0, 7);
+    return prefix + suffix;
 }
 
-function showCustomerAlert(spot, price) {
-    const alertBox = document.getElementById('custAlert');
-    const infoText = document.getElementById('custInfo');
+function startMarketLoop() {
+    let nextGuest = Math.floor(Math.random() * (AI_MARKET.maxWait - AI_MARKET.minWait + 1)) + AI_MARKET.minWait;
     
-    if (alertBox && infoText) {
-        infoText.innerHTML = `📍 Điểm đón: ${spot.name} <br> 💰 Ước tính: <span style="color:#ffc107">${price}</span>`;
-        alertBox.style.display = 'block';
+    setTimeout(() => {
+        const phone = generateRandomPhone();
+        const dest = AI_MARKET.destinations[Math.floor(Math.random() * AI_MARKET.destinations.length)];
         
-        // Rung máy báo hiệu
-        if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+        showMarketAlert(phone, dest);
+        startMarketLoop(); 
+    }, nextGuest);
+}
+
+function showMarketAlert(phone, dest) {
+    const box = document.getElementById('custAlert');
+    const info = document.getElementById('custInfo');
+    
+    if (box && info) {
+        // Giao diện hiển thị SĐT và Điểm đến để tài xế gọi điện làm giá
+        info.innerHTML = `
+            <b style="color:#2ecc71; font-size: 1.1em;">📞 KHÁCH ĐANG ĐỢI...</b><br>
+            <b>SĐT:</b> <a href="tel:${phone}" style="color:#ffc107; font-size: 1.2em;">${phone}</a><br>
+            <b>Điểm đến:</b> ${dest}<br>
+            <small>(Tài xế tự gọi điện thương lượng giá)</small>
+        `;
+        box.style.display = 'block';
+        
+        // Âm thanh thông báo để tài xế chú ý
+        if (navigator.vibrate) navigator.vibrate([500, 100, 500]);
     }
 }
 
-// Hàm điều hướng khi nhấn nút
-function goNavigation() {
-    // Tọa độ khách giả định để test dẫn đường
-    const lat = 20.95; 
-    const lng = 107.05;
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank');
-}
-
-// Kích hoạt AI
-initAIHunter();
+startMarketLoop();
