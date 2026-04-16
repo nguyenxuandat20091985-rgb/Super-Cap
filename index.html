@@ -9,7 +9,7 @@
     <style>
         :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; overflow: hidden; }
-        #map { height: 100vh; width: 100vw; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
 
         /* HIỆU ỨNG CHẤM XANH HOẠT ĐỘNG */
         .pulse-marker {
@@ -27,7 +27,7 @@
         /* AUTH & UI */
         .auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .auth-card { background: white; padding: 30px; border-radius: 30px; width: 80%; text-align: center; }
-        .auth-card input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; }
+        .auth-card input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; box-sizing: border-box; outline: none; }
         
         .header { position: fixed; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 1000; }
         .badge { background: white; padding: 10px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -36,7 +36,7 @@
         .nav { display: flex; justify-content: space-around; text-align: center; }
         .nav-item { border: none; background: none; flex: 1; font-size: 11px; font-weight: bold; color: #999; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 24px; display: block; margin-bottom: 5px; }
+        .nav-item i { font-size: 24px; display: block; margin-bottom: 5px; font-style: normal; }
 
         /* BÁO KHÁCH POPUP */
         .customer-alert {
@@ -45,7 +45,6 @@
             border-radius: 20px; z-index: 3000; display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .btn-nav { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; font-weight: bold; margin-top: 10px; }
 
         /* MENU VIP */
         .vip-menu { position: fixed; inset: 0; background: white; z-index: 4000; display: none; flex-direction: column; }
@@ -64,10 +63,8 @@
     </div>
 
     <div class="customer-alert" id="custAlert">
-        <div style="font-size:12px; color:var(--primary)">⚡ CÓ CUỐC MỚI</div>
-        <b id="custInfo">Khách đi Sân Bay - 500k</b>
-        <button class="btn-nav" onclick="goNav()">DẪN ĐƯỜNG (GOOGLE MAPS)</button>
-        <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#666; width:100%; margin-top:10px;">Bỏ qua</button>
+        <div id="custInfo"></div>
+        <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#aaa; width:100%; margin-top:15px; font-size: 13px;">Bỏ qua cuốc này</button>
     </div>
 
     <div class="header">
@@ -111,8 +108,32 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map, driverMarker, userLoc = [20.95, 107.07];
+        var map, driverMarker;
+        var userLoc = [20.95, 107.07]; // Mặc định Hạ Long
         const FIREBASE_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/drivers.json";
+
+        function initMap() {
+            if (!map) {
+                map = L.map('map', { zoomControl: false }).setView(userLoc, 16);
+                L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']
+                }).addTo(map);
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(function(position) {
+                    userLoc = [position.coords.latitude, position.coords.longitude];
+                    map.setView(userLoc, 16);
+                    
+                    if (!driverMarker) {
+                        const pulseIcon = L.divIcon({ className: '', html: '<div class="pulse-marker"></div>', iconSize: [20, 20] });
+                        driverMarker = L.marker(userLoc, { icon: pulseIcon }).addTo(map);
+                    } else {
+                        driverMarker.setLatLng(userLoc);
+                    }
+                }, null, { enableHighAccuracy: true });
+            }
+        }
 
         function login() {
             const p = document.getElementById('scPhone').value;
@@ -120,8 +141,6 @@
             if(!p || !b) return alert("Nhập đủ thông tin anh ơi!");
             
             const userData = { phone: p, plate: b, time: new Date().toLocaleString() };
-            
-            // LƯU VÀO FIREBASE
             fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(userData) })
             .then(() => {
                 localStorage.setItem('sc_user', JSON.stringify(userData));
@@ -134,28 +153,17 @@
             document.getElementById('authScreen').style.display = 'none';
             const data = JSON.parse(saved);
             document.getElementById('plateDisp').innerText = data.plate;
-            
-            map = L.map('map', { zoomControl: false }).setView(userLoc, 15);
-            L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { subdomains:['mt0','mt1','mt2','mt3'] }).addTo(map);
-
-            const icon = L.divIcon({ className: '', html: '<div class="pulse-marker"></div>', iconSize: [20, 20] });
-            driverMarker = L.marker(userLoc, { icon: icon }).addTo(map);
-
-            // MÔ PHỎNG NỔ CUỐC SAU 5 GIÂY
-            setTimeout(() => {
-                document.getElementById('custAlert').style.display = 'block';
-            }, 5000);
-        }
-
-        function goNav() {
-            // Điều hướng đến tọa độ khách (Ví dụ là vị trí gần đó)
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=20.955,107.075`, '_blank');
+            initMap();
         }
 
         function openVip() { document.getElementById('vipMenu').style.display = 'flex'; }
         function closeVip() { document.getElementById('vipMenu').style.display = 'none'; }
-        function pay(a, p) { window.open(`https://img.vietqr.io/image/BIDV-4430269669-compact2.png?amount=${a}&addInfo=NAP VIP ${p}`, '_blank'); }
+        function pay(a, p) { 
+            const user = JSON.parse(localStorage.getItem('sc_user'));
+            const code = `NAP VIP ${p} ${user ? user.phone : ''}`;
+            window.open(`https://img.vietqr.io/image/BIDV-4430269669-compact2.png?amount=${a}&addInfo=${code}`, '_blank'); 
+        }
     </script>
-<script src="ai_hunter.js"></script>
+    <script src="ai_hunter.js"></script>
 </body>
 </html>
