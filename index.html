@@ -8,27 +8,17 @@
     <style>
         :root { --main-color: #00f2ff; --bg-dark: #0a0a0a; --card-bg: #161616; }
         body { background: var(--bg-dark); color: white; font-family: sans-serif; margin: 0; overflow-x: hidden; }
-        
-        /* Màn hình khóa */
         #lock-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .payment-card { background: var(--card-bg); border: 2px solid #ff4444; padding: 20px; border-radius: 20px; max-width: 350px; }
-        .qr-bidv { width: 200px; border-radius: 10px; margin: 15px 0; }
-
-        /* Giao diện chính */
         .header { background: linear-gradient(180deg, #003336 0%, transparent 100%); padding: 20px; text-align: center; border-bottom: 1px solid var(--main-color); }
         .radar-container { position: relative; height: 300px; background: radial-gradient(circle, #003336 0%, #0a0a0a 100%); overflow: hidden; }
         .radar-sweep { position: absolute; inset: 0; background: conic-gradient(from 0deg, transparent, var(--main-color)); opacity: 0.1; animation: sweep 4s linear infinite; }
         @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Bản đồ giả lập */
         .map-overlay { position: absolute; inset: 0; padding: 10px; }
-        .customer-point { position: absolute; width: 12px; height: 12px; background: var(--main-color); border-radius: 50%; box-shadow: 0 0 15px var(--main-color); animation: pulse 1.5s infinite; cursor: pointer; }
+        .customer-point { position: absolute; width: 15px; height: 15px; background: #ffea00; border-radius: 50%; box-shadow: 0 0 20px #ffea00; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
-
-        /* Bảng danh sách & Gói cước */
         .info-panel { padding: 15px; }
-        .btn-action { background: var(--main-color); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
-        .price-tag { display: inline-block; background: #333; padding: 5px 10px; border-radius: 5px; margin: 5px; font-size: 0.9em; border: 1px solid var(--main-color); }
+        .btn-action { background: var(--main-color); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -36,84 +26,71 @@
     <div id="lock-screen">
         <div class="payment-card">
             <h2 style="color:#ff4444">HẾT HẠN SỬ DỤNG</h2>
-            <p>Vui lòng đóng cước phí để tiếp tục săn khách</p>
-            <div class="price-tag">Tháng: 99.000đ</div>
-            <div class="price-tag">Năm: 799.000đ</div>
-            <img src="https://img.vietqr.io/image/bidv-4430269669-compact2.jpg?amount=99000&addInfo=KichHoatSuperCap" class="qr-bidv" alt="QR Thanh Toan">
+            <p>Vui lòng chuyển khoản để kích hoạt Radar</p>
+            <img src="https://img.vietqr.io/image/bidv-4430269669-compact2.jpg?amount=99000&addInfo=KichHoatSuperCap" style="width:200px; border-radius:10px;">
             <p><b>NGUYEN XUAN DAT</b><br>4430269669 (BIDV)</p>
-            <button class="btn-action" onclick="window.open('https://zalo.me/84xxxxxxxxx')">GỬI BILL QUA ZALO</button>
+            <button class="btn-action" onclick="window.open('https://zalo.me/s/xxxxxxxx')">XÁC NHẬN ĐÃ CHUYỂN</button>
         </div>
     </div>
 
     <div class="header">
-        <h1 style="margin:0; color:var(--main-color); font-style: italic;">SUPER CAP 2026</h1>
-        <p style="font-size: 0.8em; opacity: 0.7;">HỆ THỐNG SĂN KHÁCH ANH HAI SM</p>
+        <h1 style="margin:0; color:var(--main-color);">SUPER CAP 2026</h1>
+        <p>HỆ THỐNG SĂN KHÁCH ANH HAI SM</p>
     </div>
 
     <div class="radar-container">
         <div class="radar-sweep"></div>
-        <div id="map" class="map-overlay">
-            </div>
+        <div id="map" class="map-overlay"></div>
     </div>
 
     <div class="info-panel">
         <div style="background: #222; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-            <p id="user-status"><i class="fas fa-clock"></i> Đang kiểm tra thời hạn...</p>
-            <p id="device-id"><i class="fas fa-id-card"></i> ID: Đang lấy...</p>
+            <p id="user-status"><i class="fas fa-wifi"></i> Đang kết nối Radar...</p>
         </div>
-
-        <h3><i class="fas fa-crosshairs"></i> KHÁCH HÀNG GẦN ĐÂY</h3>
-        <div id="customer-list" style="font-size: 0.9em; opacity: 0.8;">
-            </div>
-
-        <button class="btn-action" onclick="alert('Đang tối ưu vị trí cho Xanh SM, Grab, Be...')">
-            KÍCH HOẠT SỬA APP ĐA NĂNG
-        </button>
+        <h3><i class="fas fa-crosshairs"></i> KHÁCH ĐANG CHỜ (THỰC TẾ)</h3>
+        <div id="customer-list"></div>
     </div>
 
     <script>
-        // 1. TẠO ID VÀ KIỂM TRA THỜI HẠN
-        const deviceId = "SC-" + Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('device-id').innerHTML = `<i class="fas fa-id-card"></i> ID CỦA BẠN: ${deviceId}`;
+        const FB_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
 
-        // Giả lập ngày hết hạn (thực tế anh sẽ lưu trong keys.json)
-        // Nếu là khách mới, cho dùng thử 7 ngày
-        let trialDays = 7;
-        let isExpired = false; // Anh sẽ đổi thành true nếu hết hạn
+        function updateRadar() {
+            fetch(FB_URL)
+            .then(res => res.json())
+            .then(data => {
+                const map = document.getElementById('map');
+                const list = document.getElementById('customer-list');
+                map.innerHTML = '';
+                list.innerHTML = '';
 
-        if(isExpired) {
-            document.getElementById('lock-screen').style.display = 'flex';
-        } else {
-            document.getElementById('user-status').innerHTML = `<i class="fas fa-check-circle" style="color:var(--main-color)"></i> TRẠNG THÁI: CÒN ${trialDays} NGÀY DÙNG THỬ`;
+                if (!data) {
+                    list.innerHTML = '<p style="opacity:0.5">Đang quét tìm khách quanh đây...</p>';
+                    return;
+                }
+
+                Object.values(data).forEach(c => {
+                    // Hiện chấm vàng trên Radar
+                    const dot = document.createElement('div');
+                    dot.className = 'customer-point';
+                    dot.style.top = Math.floor(Math.random() * 80 + 10) + "%";
+                    dot.style.left = Math.floor(Math.random() * 80 + 10) + "%";
+                    map.appendChild(dot);
+
+                    // Hiện danh sách cuốc
+                    const item = document.createElement('div');
+                    item.style.padding = "10px";
+                    item.style.borderBottom = "1px solid #333";
+                    item.innerHTML = `<i class="fas fa-map-marker-alt" style="color:#ffea00"></i> ${c.info || 'Khách vãng lai'}`;
+                    list.appendChild(item);
+                });
+                document.getElementById('user-status').innerHTML = `<i class="fas fa-check-circle" style="color:#00ff00"></i> RADAR ĐANG HOẠT ĐỘNG`;
+            })
+            .catch(err => console.log("Chưa có dữ liệu khách"));
         }
 
-        // 2. GIẢ LẬP RADAR BÁO KHÁCH
-        const customers = [
-            { top: '30%', left: '40%', info: 'Khách đi Sân Bay - 2.5km' },
-            { top: '60%', left: '70%', info: 'Khách đi Tỉnh - 15km' },
-            { top: '10%', left: '20%', info: 'Khách Xanh SM - 500m' }
-        ];
-
-        function showRadar() {
-            const map = document.getElementById('map');
-            const list = document.getElementById('customer-list');
-            map.innerHTML = '';
-            list.innerHTML = '';
-
-            customers.forEach(c => {
-                const dot = document.createElement('div');
-                dot.className = 'customer-point';
-                dot.style.top = c.top;
-                dot.style.left = c.left;
-                dot.onclick = () => alert(c.info);
-                map.appendChild(dot);
-
-                const item = document.createElement('div');
-                item.innerHTML = `<p style="border-bottom: 1px solid #333; padding: 5px 0;"><i class="fas fa-map-marker-alt"></i> ${c.info}</p>`;
-                list.appendChild(item);
-            });
-        }
-        showRadar();
+        // Cứ 3 giây quét khách mới 1 lần
+        setInterval(updateRadar, 3000);
+        updateRadar();
     </script>
 </body>
 </html>
