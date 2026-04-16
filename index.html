@@ -2,71 +2,110 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RADAR MAP SUPER CAP 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SUPER-CAP PRO - NGUYỄN XUÂN ĐẠT</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; background: #0a0a0a; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --danger: #ff5252; --bg: #f8faf9; --glass: rgba(255, 255, 255, 0.95); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: var(--bg); }
         
-        /* Bản đồ nền */
-        #map { width: 100%; height: 100%; z-index: 1; }
+        #map { height: 100vh; width: 100vw; z-index: 1; } 
 
-        /* Lớp phủ Radar gọn gàng ở góc */
-        .radar-container {
-            position: absolute; top: 20px; right: 20px;
-            width: 120px; height: 120px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 50%; border: 2px solid #00f2ff;
-            z-index: 10; overflow: hidden; pointer-events: none;
-        }
-        .beam {
-            width: 100%; height: 100%;
-            background: conic-gradient(from 0deg, transparent 80%, rgba(0, 242, 255, 0.5) 100%);
-            animation: spin 2s linear infinite; border-radius: 50%;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* Header & Thông tin quét */
+        .header { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 1000; pointer-events: none; }
+        .badge { pointer-events: auto; background: var(--glass); padding: 8px 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 11px; font-weight: 800; color: var(--dark); border: 1px solid white; } 
 
-        /* Bảng danh sách cuốc xe nổ */
-        .status-panel {
-            position: absolute; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(0, 20, 30, 0.85);
-            border-left: 5px solid #00f2ff; border-radius: 10px;
-            padding: 15px; z-index: 10; color: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            max-height: 150px; overflow-y: auto;
-        }
-        .customer-item {
-            background: rgba(255, 255, 255, 0.1);
-            margin-bottom: 8px; padding: 10px; border-radius: 5px;
-            animation: blink 1s infinite alternate;
-        }
-        @keyframes blink { from { border: 1px solid transparent; } to { border: 1px solid #00f2ff; } }
+        /* Bảng nổ cuốc Radar */
+        #radar-panel { position: fixed; top: 120px; left: 10px; right: 10px; z-index: 1000; background: rgba(0, 45, 38, 0.9); color: #fff; padding: 15px; border-radius: 15px; display: none; border-left: 5px solid var(--primary); animation: slideIn 0.5s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+        /* Stats bar */
+        .stats-bar { position: fixed; top: 55px; left: 10px; right: 10px; background: var(--glass); border-radius: 15px; display: flex; padding: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); z-index: 1000; }
+        .stat-item { flex: 1; text-align: center; }
+        .stat-label { font-size: 9px; color: #7f8c8d; font-weight: 800; }
+        .stat-value { font-size: 20px; font-weight: 900; color: var(--dark); }
+
+        /* Footer & Nav */
+        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 25px 25px 0 0; padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); }
+        .nav-grid { display: flex; justify-content: space-around; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .nav-item { border: none; background: none; color: #bdc3c7; font-size: 10px; font-weight: 700; flex: 1; text-align: center; }
+        .nav-item.active { color: var(--primary); }
         
-        .header {
-            position: absolute; top: 20px; left: 20px;
-            z-index: 10; color: #00f2ff; text-shadow: 2px 2px 5px #000;
-            margin: 0; font-size: 20px; font-weight: bold;
-        }
+        .tab-content { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 140px); background: #fff; z-index: 1500; display: none; flex-direction: column; overflow-y: auto; }
+        .p-header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .p-card { background: white; border: 1px solid #eee; border-radius: 15px; padding: 15px; text-align: center; }
+        .p-btn { margin-top: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; padding: 8px; width: 100%; font-weight: bold; }
+
+        .btn-main { width: 100%; padding: 15px; border-radius: 15px; border: none; background: var(--primary); color: white; font-size: 16px; font-weight: 900; }
     </style>
 </head>
 <body>
 
-    <h1 class="header">🛰️ HỆ THỐNG GIÁM SÁT SUPER CAP</h1>
+    <div class="header">
+        <div class="badge" id="txID">🆔 ĐANG TẢI...</div>
+        <div class="badge" style="color:var(--gold)">⭐ GÓI: VIP PRO</div>
+    </div>
 
-    <div class="radar-container">
-        <div class="beam"></div>
+    <div class="stats-bar">
+        <div class="stat-item" style="border-right: 1px solid #eee;">
+            <div class="stat-label">TIỀN CƯỚC (đ)</div>
+            <div id="cost" class="stat-value">0</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">QUÃNG ĐƯỜNG (KM)</div>
+            <div id="km" class="stat-value">0.00</div>
+        </div>
+    </div>
+
+    <div id="radar-panel">
+        <div style="font-size: 10px; color: var(--primary); font-weight: bold;">📡 PHÁT HIỆN CUỐC MỚI</div>
+        <div id="customer-info" style="font-size: 16px; font-weight: bold; margin: 5px 0;">Đang quét khách...</div>
+        <button onclick="document.getElementById('radar-panel').style.display='none'" style="background:none; border:1px solid #fff; color:#fff; border-radius:5px; font-size:10px;">ĐÓNG</button>
     </div>
 
     <div id="map"></div>
 
-    <div class="status-panel" id="customer-list">
-        <div style="color: #aaa;">Đang quét tín hiệu khách hàng...</div>
+    <div id="tab-vi" class="tab-content">
+        <div class="p-header">
+            <div style="font-size: 18px; font-weight: 800;">VÍ TÀI XẾ ANHHAIC2</div>
+            <div>Nạp tiền để duy trì dịch vụ Radar</div>
+        </div>
+        <div class="p-grid">
+            <div class="p-card">
+                <b>CHUYẾN LẺ</b><br><span style="color:var(--primary)">5.000đ</span>
+                <button class="p-btn" onclick="pay(5000, 'CHUYEN LE')">NẠP NGAY</button>
+            </div>
+            <div class="p-card">
+                <b>GÓI PRO</b><br><span style="color:var(--primary)">49.000đ</span>
+                <button class="p-btn" onclick="pay(49000, 'GOI PRO')">NẠP NGAY</button>
+            </div>
+        </div>
+        <div style="padding: 15px; text-align: center; font-size: 12px; color: #7f8c8d;">
+            Hệ thống tự động tạo mã QR BIDV của Nguyễn Xuân Đạt
+        </div>
     </div>
 
+    <div class="footer-panel">
+        <div id="home-controls">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:11px; font-weight:bold;">
+                <span>GIÁ/KM: <span style="color:var(--danger)">15,000đ</span></span>
+            </div>
+            <button id="mainBtn" class="btn-main" onclick="toggleTrip()">BẮT ĐẦU CHUYẾN ĐI</button>
+        </div>
+        <div class="nav-grid">
+            <button class="nav-item active" onclick="showTab('home', this)">🏠<br>Trang chủ</button>
+            <button class="nav-item" onclick="showTab('vi', this)">💰<br>Ví tiền</button>
+            <button class="nav-item">👤<br>Tôi</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // 1. Cấu hình Firebase của anh Đạt
         const firebaseConfig = {
@@ -75,52 +114,65 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. Khởi tạo bản đồ (Mặc định ở Hà Nội)
-        var map = L.map('map').setView([21.0285, 105.8542], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        // 2. Cấu hình Ngân hàng BIDV của anh Đạt
+        const BIDV_STK = "4430269669";
+        const BIDV_NAME = "NGUYEN XUAN DAT";
 
-        // Biểu tượng xe khách
-        var carIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/744/744465.png',
-            iconSize: [40, 40],
-            iconAnchor: [20, 20]
-        });
+        // 3. Khởi tạo Bản đồ
+        var map = L.map('map', { zoomControl: false }).setView([21.02, 105.83], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        var marker = L.circleMarker([21.02, 105.83], { color: '#00bfa5', radius: 10 }).addTo(map);
 
-        // 3. Lắng nghe dữ liệu từ Firebase
+        // 4. Radar Quét Khách (Lấy dữ liệu từ Firebase)
         db.ref('customers').on('value', (snapshot) => {
-            const listDiv = document.getElementById('customer-list');
-            listDiv.innerHTML = ""; // Xóa danh sách cũ
-            
             const data = snapshot.val();
             if (data) {
-                Object.keys(data).forEach(key => {
-                    const customer = data[key];
-                    
-                    // Thêm vào danh sách bên dưới
-                    const item = document.createElement('div');
-                    item.className = 'customer-item';
-                    item.innerHTML = `⚡ <b>KHÁCH MỚI:</b> ${customer.info || "Đang cập nhật..."}`;
-                    listDiv.prepend(item);
-
-                    // Nếu có tọa độ thì vẽ lên bản đồ
-                    if (customer.lat && customer.lng) {
-                        L.marker([customer.lat, customer.lng], {icon: carIcon})
-                            .addTo(map)
-                            .bindPopup(customer.info)
-                            .openPopup();
-                        map.flyTo([customer.lat, customer.lng], 15);
-                    }
-                });
-                
-                // Tiếng chuông báo khi có khách
-                var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                audio.play();
-            } else {
-                listDiv.innerHTML = "Đang quét tín hiệu khách hàng...";
+                const lastKey = Object.keys(data).pop();
+                const info = data[lastKey].info;
+                document.getElementById('customer-info').innerText = info;
+                document.getElementById('radar-panel').style.display = 'block';
+                speak("Anh Đạt ơi, có cuốc xe mới!");
             }
         });
+
+        // 5. Tính năng Thanh toán QR
+        function pay(amount, plan) {
+            const txID = document.getElementById('txID').innerText.replace('🆔 ', '');
+            const desc = `NAP ${plan} ${txID}`;
+            const qrUrl = `https://img.vietqr.io/image/BIDV/${BIDV_STK}-compact2.jpg?amount=${amount}&addInfo=${desc}&accountName=${BIDV_NAME}`;
+            window.open(qrUrl, '_blank');
+        }
+
+        // 6. Các hàm bổ trợ
+        let isRunning = false, totalKm = 0, lastPos = null;
+        function toggleTrip() {
+            isRunning = !isRunning;
+            const btn = document.getElementById('mainBtn');
+            btn.innerText = isRunning ? "KẾT THÚC CHUYẾN ĐI" : "BẮT ĐẦU CHUYẾN ĐI";
+            btn.style.background = isRunning ? "var(--danger)" : "var(--primary)";
+            if(isRunning) { totalKm = 0; }
+        }
+
+        function speak(text) {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'vi-VN';
+            window.speechSynthesis.speak(msg);
+        }
+
+        function showTab(tab, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            btn.classList.add('active');
+            if(tab !== 'home') document.getElementById('tab-'+tab).style.display = 'flex';
+        }
+
+        // Giữ màn hình luôn sáng
+        if ('wakeLock' in navigator) { navigator.wakeLock.request('screen'); }
+        
+        // Cấp ID ngẫu nhiên cho tài xế mới
+        const myID = localStorage.getItem('tx_id') || 'AC2-' + Math.floor(Math.random()*9999);
+        localStorage.setItem('tx_id', myID);
+        document.getElementById('txID').innerText = "🆔 " + myID;
     </script>
 </body>
 </html>
