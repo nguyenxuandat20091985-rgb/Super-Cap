@@ -1,74 +1,65 @@
-// AI THỢ SĂN KHÁCH V6.0 - CHỈ KHÁCH THẬT 100% - ANHHAIC2
-const AI_CONFIG = {
-    // Đường dẫn Firebase chứa khách thật quét từ FB/Zalo
-    firebaseURL: "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/real_guests.json"
-};
-
-window.lastGuestId = null;
-
-// 1. HÀM CANH KHÁCH THỰC TẾ 24/7
 function watchRealGuest() {
-    console.log("📡 Hệ thống đang canh khách thật từ vệ tinh...");
-    
     setInterval(() => {
         fetch(AI_CONFIG.firebaseURL)
         .then(res => res.json())
         .then(data => {
             if (data) {
-                // Lấy danh sách ID khách
                 const keys = Object.keys(data);
                 const lastKey = keys[keys.length - 1];
                 const lastGuest = data[lastKey];
-                
-                // Chỉ nổ cuốc khi phát hiện có ID khách mới hoàn toàn
+
                 if (window.lastGuestId !== lastKey) {
                     window.lastGuestId = lastKey;
-                    showRealGuest(lastGuest.phone, lastGuest.dest, lastGuest.source || "HỆ THỐNG");
+
+                    if (lastGuest.lat && lastGuest.lon && typeof userLoc !== 'undefined') {
+                        let distanceKm = getDistance(userLoc[0], userLoc[1], lastGuest.lat, lastGuest.lon);
+                        let isLongDist = lastGuest.isLongDist; // Phân loại từ Admin/Chatbot
+
+                        // CHÍNH SÁCH LỌC THÔNG MINH
+                        if (isLongDist) {
+                            // CUỐC ĐI TỈNH/TOUR: Tài xế trong vòng 15km đều thấy để tiện chuyến
+                            if (distanceKm <= 15) {
+                                showRealGuest(lastGuest.phone, lastGuest.dest, "ĐƯỜNG DÀI", distanceKm);
+                            }
+                        } else {
+                            // CUỐC NỘI THÀNH: Áp dụng quy tắc 5 phút (dưới 3.5km)
+                            if (distanceKm <= 3.5) {
+                                let pickupTime = Math.ceil((distanceKm / 40) * 60);
+                                showRealGuest(lastGuest.phone, lastGuest.dest, pickupTime + " PHÚT", distanceKm);
+                            }
+                        }
+                    }
                 }
             }
-        })
-        .catch(e => {
-            // Lỗi này thường do internet hoặc chưa có khách nào trên database
-            console.log("Đang quét tín nguồn khách...");
         });
-    }, 3000); // 3 giây quét một lần để đảm bảo tài xế nhận cuốc nhanh nhất
+    }, 4000);
 }
 
-// 2. HÀM HIỂN THỊ CUỐC XE THẬT
-function showRealGuest(phone, dest, source) {
+function showRealGuest(phone, dest, timeLabel, distance) {
     const box = document.getElementById('custAlert');
     const info = document.getElementById('custInfo');
-    
     if (box && info) {
-        // Giao diện tập trung vào số điện thoại và điểm đến thực tế
+        // Đổi màu sắc dựa trên loại cuốc để tài xế dễ nhận diện
+        const isLong = timeLabel === "ĐƯỜNG DÀI";
+        const themeColor = isLong ? "#007aff" : "#ff4d4d"; // Xanh dương cho tỉnh, Đỏ cho nội thành
+        
         info.innerHTML = `
-            <div style="border-bottom: 1px solid #ff4d4d; padding-bottom:8px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="background:#ff4d4d; color:#fff; padding:3px 10px; border-radius:8px; font-size:11px; font-weight:bold;">📍 KHÁCH THẬT</span>
-                <span style="font-size:10px; color:#aaa;">Nguồn: ${source}</span>
+            <div style="border-bottom: 1px solid ${themeColor}; padding-bottom:8px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="background:${themeColor}; color:#fff; padding:3px 10px; border-radius:8px; font-size:11px; font-weight:bold;">${isLong ? '💎 TIỆN CHUYẾN/TOUR' : '📍 CUỐC GẦN'}</span>
+                <span style="font-size:10px; color:${themeColor}; font-weight:bold;">${timeLabel}</span>
             </div>
             <div style="font-size: 1.1em; line-height: 1.8;">
                 <div style="margin-bottom:8px;">
-                    <span style="color:#aaa; font-size:0.9em;">Số điện thoại:</span><br>
-                    <a href="tel:${phone}" style="color:#00bfa5; font-size:1.6em; text-decoration:none; font-weight:900; letter-spacing:1px;">📞 ${phone}</a>
+                    <span style="color:#aaa; font-size:0.9em;">Liên hệ khách:</span><br>
+                    <a href="tel:${phone}" style="color:#00bfa5; font-size:1.6em; text-decoration:none; font-weight:900;">📞 ${phone}</a>
                 </div>
                 <div>
-                    <span style="color:#aaa; font-size:0.9em;">Điểm đón khách:</span><br>
-                    <span style="color:#fff; font-weight:bold; font-size:1.2em;">${dest}</span>
+                    <span style="color:#aaa; font-size:0.9em;">Điểm đón: (Cách ${distance.toFixed(1)} km)</span><br>
+                    <span style="color:#fff; font-weight:bold;">${dest}</span>
                 </div>
             </div>
-            <div style="margin-top:15px; background:rgba(0,191,165,0.1); padding:8px; border-radius:10px; text-align:center;">
-                <span style="color:#00bfa5; font-size:11px;">✅ Tài xế liên hệ ngay để chốt khách</span>
-            </div>
         `;
-        
         box.style.display = 'block';
-        
-        // Rung mạnh báo hiệu có khách thật
-        if (navigator.vibrate) {
-            navigator.vibrate([500, 110, 500, 110, 500]);
-        }
+        if (navigator.vibrate) navigator.vibrate(isLong ? [200, 100, 200] : [500, 100, 500]);
     }
 }
-
-// 3. KHỞI CHẠY DUY NHẤT HÀM CANH KHÁCH THẬT
-watchRealGuest();
