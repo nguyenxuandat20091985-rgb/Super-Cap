@@ -3,187 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SUPER-CAP AI - NGUYỄN XUÂN ĐẠT</title>
+    <title>SUPER-CAP V2 - ANHHAIC2</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-
+    
     <style>
-        :root { --primary: #00bfa5; --dark: #013220; --gold: #ffc107; --danger: #ff5252; --bg: #f0f4f3; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; background: var(--bg); }
+        :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --danger: #ff5252; --bg: #f8faf9; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); overflow: hidden; }
         
+        /* Bản đồ */
         #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* Header thông tin */
+        /* Thanh trạng thái phía trên */
         .header { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 1000; }
-        .badge { background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 11px; font-weight: bold; border: 1px solid var(--primary); }
+        .badge { background: rgba(255,255,255,0.9); padding: 8px 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 11px; font-weight: 800; border: 1px solid white; }
 
-        /* Bảng nổ cuốc Radar - Trái tim của Super-Cap */
-        .radar-panel { position: fixed; top: 60px; left: 10px; right: 10px; background: rgba(1, 50, 32, 0.9); border-radius: 15px; padding: 15px; color: white; z-index: 1000; border: 2px solid var(--primary); box-shadow: 0 0 20px rgba(0, 191, 165, 0.4); display: none; }
-        .radar-title { font-size: 12px; color: var(--primary); font-weight: 900; text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; }
-        .radar-title::before { content: ""; width: 10px; height: 10px; background: red; border-radius: 50%; display: inline-block; margin-right: 8px; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        /* Form đăng ký khi mới vào */
+        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        .auth-card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 350px; color: var(--dark); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; }
+        .btn-start { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 900; font-size: 16px; cursor: pointer; }
 
-        /* Footer & Menu */
-        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 20px 20px 0 0; padding: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
-        .nav-grid { display: flex; justify-content: space-around; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-        .nav-item { border: none; background: none; color: #bdc3c7; font-size: 10px; font-weight: bold; text-align: center; flex: 1; }
+        /* Bảng điều khiển phía dưới */
+        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 25px 25px 0 0; padding: 15px; text-align: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+        .nav-grid { display: flex; justify-content: space-around; margin-top: 10px; }
+        .nav-item { border: none; background: none; color: #bdc3c7; font-size: 10px; font-weight: 700; flex: 1; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; font-style: normal; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 2px; font-style: normal; }
 
-        /* Tab nội dung */
-        .tab-content { position: fixed; top: 0; left: 0; width: 100%; height: calc(100% - 150px); background: white; z-index: 1500; display: none; overflow-y: auto; padding: 20px; }
-        .p-card { background: #f8faf9; border: 1px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 15px; text-align: center; }
-        .btn-pay { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 10px 20px; font-weight: bold; margin-top: 10px; width: 100%; }
-        
-        /* Marker lái xe */
-        .car-marker { width: 30px; height: 30px; background: var(--primary); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 15px var(--primary); }
+        /* Modal nạp tiền */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 350px; padding: 20px; border-radius: 20px; position: relative; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="badge" id="txID">🆔 ĐANG TẢI...</div>
-        <div class="badge" style="color:var(--danger)" id="status">📡 RADAR: OFF</div>
+    <div id="authOverlay" class="auth-overlay" style="display: none;">
+        <div class="auth-card">
+            <h2 style="color: var(--primary);">SUPER-CAP V2</h2>
+            <p>Vui lòng đăng ký để bắt đầu săn khách</p>
+            <input type="number" id="regPhone" placeholder="Số điện thoại">
+            <input type="text" id="regPlate" placeholder="Biển số xe (Ví dụ: 30A-12345)">
+            <button class="btn-start" onclick="handleRegister()">BẮT ĐẦU NGAY</button>
+        </div>
     </div>
 
-    <div id="radarPanel" class="radar-panel">
-        <div class="radar-title">Phát hiện cuốc xe mới!</div>
-        <div id="customerInfo" style="font-size: 16px; font-weight: bold;">Đang quét nguồn khách...</div>
-        <div id="customerDist" style="font-size: 12px; color: #ccc; margin-top: 5px;"></div>
+    <div class="header">
+        <div class="badge" id="idDisplay">🆔 SC-GUEST</div>
+        <div class="badge" id="vipDisplay" style="color:var(--gold)">⭐ VIP: FREE</div>
     </div>
 
     <div id="map"></div>
 
-    <div id="tab-vi" class="tab-content">
-        <h2 style="text-align: center; color: var(--primary);">NẠP GÓI SUPER-CAP</h2>
-        <div class="p-card">
-            <b>GÓI PRO (30 NGÀY)</b><br>
-            <span style="font-size: 20px; color: var(--primary); font-weight: 900;">49.000đ</span>
-            <button class="btn-pay" onclick="pay('49000', 'PRO 30D')">NẠP QUA BIDV</button>
+    <div class="footer-panel">
+        <div id="statusText" style="font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 5px;">HỆ THỐNG ĐANG QUÉT KHÁCH...</div>
+        <div class="nav-grid">
+            <button class="nav-item active" onclick="alert('Đang ở trang chủ')"><i>🏠</i>Trang chủ</button>
+            <button class="nav-item" onclick="openPayment()"><i>💰</i>Nạp VIP</button>
+            <button class="nav-item" onclick="location.reload()"><i>🔄</i>Làm mới</button>
         </div>
-        <div class="p-card">
-            <b>GÓI PRO MAX (90 NGÀY)</b><br>
-            <span style="font-size: 20px; color: var(--primary); font-weight: 900;">129.000đ</span>
-            <button class="btn-pay" onclick="pay('129000', 'PROMAX 90D')">NẠP QUA BIDV</button>
-        </div>
-        <p style="font-size: 11px; color: #7f8c8d; text-align: center;">Chủ TK: NGUYEN XUAN DAT<br>BIDV: 4430269669</p>
     </div>
 
-    <div class="footer-panel">
-        <div id="homeUI">
-            <button class="btn-pay" id="startBtn" onclick="toggleRadar()" style="padding: 15px; font-size: 16px; border-radius: 15px; background: var(--primary);">BẬT QUÉT KHÁCH TỰ ĐỘNG</button>
-        </div>
-        <div class="nav-grid">
-            <button class="nav-item active" onclick="showTab('home', this)"><i>🏠</i>Trang chủ</button>
-            <button class="nav-item" onclick="showTab('vi', this)"><i>💰</i>Gói cước</button>
-            <button class="nav-item" onclick="location.reload()"><i>🔄</i>Làm mới</button>
+    <div id="payModal" class="modal" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="text-align:center">NÂNG CẤP VIP3 (300K)</h3>
+            <p style="font-size: 12px; text-align: center;">Quét mã để kích hoạt săn khách AI cao cấp</p>
+            <img id="qrImg" src="" style="width: 100%; border: 5px solid #f0f0f0; border-radius: 10px;">
+            <p style="text-align:center; font-weight: bold; color: var(--primary);">Nội dung: <span id="payCode"></span></p>
+            <button class="btn-start" onclick="document.getElementById('payModal').style.display='none'">ĐÃ CHUYỂN KHOẢN</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. CẤU HÌNH FIREBASE - KẾT NỐI VỚI HỆ THỐNG CỦA ANH
-        const firebaseConfig = {
-            databaseURL: "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // 1. THÔNG TIN CẤU HÌNH (BIDV CỦA ANH ĐẠT)
+        const MY_STK = "4430269669";
+        const MY_NAME = "NGUYEN XUAN DAT";
 
-        // 2. QUẢN LÝ ID TÀI XẾ
-        const TX_ID = localStorage.getItem('tx_id') || 'CAP-' + Math.random().toString(36).substr(2, 4).toUpperCase();
-        localStorage.setItem('tx_id', TX_ID);
-        document.getElementById('txID').innerText = "🆔 " + TX_ID;
-
-        // 3. BẢN ĐỒ
-        var map = L.map('map', { zoomControl: false }).setView([21.02, 105.83], 15);
+        // 2. KHỞI TẠO APP
+        let userData = JSON.parse(localStorage.getItem('sc_user'));
+        var map = L.map('map', { zoomControl: false }).setView([21.02, 105.83], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        var marker = L.marker([21.02, 105.83], { icon: L.divIcon({className: 'car-marker'}) }).addTo(map);
 
-        let radarActive = false;
-        let wakeLock = null;
-
-        // 4. HÀM BẬT/TẮT RADAR SĂN KHÁCH
-        function toggleRadar() {
-            const btn = document.getElementById('startBtn');
-            const status = document.getElementById('status');
-            
-            if (!radarActive) {
-                radarActive = true;
-                btn.innerText = "ĐANG QUÉT KHÁCH...";
-                btn.style.background = "#666";
-                status.innerText = "📡 RADAR: ONLINE";
-                status.style.color = "var(--primary)";
-                speak("Hệ thống Super Cap đã sẵn sàng săn khách cho anh Đạt.");
-                listenToCustomers();
-                if ('wakeLock' in navigator) navigator.wakeLock.request('screen');
+        window.onload = function() {
+            if(!userData) {
+                document.getElementById('authOverlay').style.display = 'flex';
             } else {
-                radarActive = false;
-                btn.innerText = "BẬT QUÉT KHÁCH TỰ ĐỘNG";
-                btn.style.background = "var(--primary)";
-                status.innerText = "📡 RADAR: OFF";
-                db.ref('customers').off();
-                document.getElementById('radarPanel').style.display = 'none';
+                showApp();
+            }
+        };
+
+        // 3. XỬ LÝ ĐĂNG KÝ
+        function handleRegister() {
+            const phone = document.getElementById('regPhone').value;
+            const plate = document.getElementById('regPlate').value;
+            if(phone.length < 10) return alert("Số điện thoại không đúng!");
+
+            userData = {
+                id: 'SC' + Math.floor(1000 + Math.random() * 9000),
+                phone: phone,
+                plate: plate,
+                vip: "FREE"
+            };
+            localStorage.setItem('sc_user', JSON.stringify(userData));
+            document.getElementById('authOverlay').style.display = 'none';
+            showApp();
+        }
+
+        function showApp() {
+            document.getElementById('idDisplay').innerText = "🆔 " + userData.id;
+            document.getElementById('vipDisplay').innerText = "⭐ VIP: " + userData.vip;
+            
+            // Lấy vị trí GPS thật
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(p => {
+                    const lat = p.coords.latitude;
+                    const lng = p.coords.longitude;
+                    map.setView([lat, lng], 15);
+                    L.marker([lat, lng]).addTo(map).bindPopup("Vị trí của anh").openPopup();
+                });
             }
         }
 
-        // 5. LẮNG NGHE KHÁCH TỪ FIREBASE (TỰ ĐỘNG)
-        function listenToCustomers() {
-            db.ref('customers').on('value', (snapshot) => {
-                if (!radarActive) return;
-                const data = snapshot.val();
-                if (data) {
-                    const latestKey = Object.keys(data).pop();
-                    const info = data[latestKey].info;
-                    
-                    // Hiển thị bảng nổ cuốc
-                    document.getElementById('radarPanel').style.display = 'block';
-                    document.getElementById('customerInfo').innerText = "🚕 " + info;
-                    
-                    // Phát âm thanh báo động
-                    speak("Có khách mới anh ơi! " + info);
-                    
-                    // Hiệu ứng rung điện thoại
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                }
-            });
-        }
-
-        // 6. THANH TOÁN QUA BIDV (Tạo mã VietQR)
-        function pay(amount, plan) {
-            const stk = "4430269669";
-            const name = "NGUYEN XUAN DAT";
-            const desc = `NAP ${plan} ${TX_ID}`;
-            const qrUrl = `https://img.vietqr.io/image/BIDV/${stk}-compact2.jpg?amount=${amount}&addInfo=${desc}&accountName=${name}`;
+        // 4. XỬ LÝ NẠP TIỀN
+        function openPayment() {
+            const amount = 300000; // Mặc định gói VIP3
+            const code = "NAP VIP3 " + userData.id;
+            document.getElementById('payCode').innerText = code;
             
-            alert(`Anh đang nạp gói ${plan}.\nSau khi chuyển khoản, hệ thống sẽ tự động kích hoạt qua ID: ${TX_ID}`);
-            window.open(qrUrl, '_blank');
+            // Tạo link VietQR chuẩn
+            const qrUrl = `https://img.vietqr.io/image/BIDV-${MY_STK}-compact2.png?amount=${amount}&addInfo=${code}&accountName=${MY_NAME}`;
+            document.getElementById('qrImg').src = qrUrl;
+            document.getElementById('payModal').style.display = 'flex';
         }
-
-        // 7. TIỆN ÍCH HỖ TRỢ
-        function speak(text) {
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'vi-VN';
-            window.speechSynthesis.speak(msg);
-        }
-
-        function showTab(tab, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (tab !== 'home') document.getElementById('tab-' + tab).style.display = 'block';
-        }
-
-        // Cập nhật vị trí GPS
-        navigator.geolocation.watchPosition(pos => {
-            const { latitude, longitude } = pos.coords;
-            const p = [latitude, longitude];
-            marker.setLatLng(p);
-            if (radarActive) map.panTo(p);
-        }, null, { enableHighAccuracy: true });
-
     </script>
 </body>
 </html>
