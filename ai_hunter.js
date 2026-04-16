@@ -1,90 +1,74 @@
-// AI THỢ SĂN KHÁCH V5.0 - AUTO MONITORING - ANHHAIC2
+// AI THỢ SĂN KHÁCH V6.0 - CHỈ KHÁCH THẬT 100% - ANHHAIC2
 const AI_CONFIG = {
-    minWait: 45000, 
-    maxWait: 150000,
-    phonePrefix: ['091','098','090','034','035','086','077','039'],
-    points: ["Cầu Bãi Cháy", "Chợ Hạ Long 2", "Bệnh viện Tỉnh", "Khu Mon Bay", "Cột 8", "Big C Hạ Long", "Sun World", "Bãi tắm Hòn Gai"],
+    // Đường dẫn Firebase chứa khách thật quét từ FB/Zalo
     firebaseURL: "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/real_guests.json"
 };
 
 window.lastGuestId = null;
 
-// 1. HÀM CANH KHÁCH THẬT TỪ FIREBASE (CHẠY NGẦM 24/7)
+// 1. HÀM CANH KHÁCH THỰC TẾ 24/7
 function watchRealGuest() {
+    console.log("📡 Hệ thống đang canh khách thật từ vệ tinh...");
+    
     setInterval(() => {
         fetch(AI_CONFIG.firebaseURL)
         .then(res => res.json())
         .then(data => {
             if (data) {
+                // Lấy danh sách ID khách
                 const keys = Object.keys(data);
                 const lastKey = keys[keys.length - 1];
                 const lastGuest = data[lastKey];
                 
-                // Nếu tìm thấy ID mới (Khách thật mới đẩy lên)
+                // Chỉ nổ cuốc khi phát hiện có ID khách mới hoàn toàn
                 if (window.lastGuestId !== lastKey) {
                     window.lastGuestId = lastKey;
-                    showGuest(lastGuest.phone, lastGuest.dest, true);
+                    showRealGuest(lastGuest.phone, lastGuest.dest, lastGuest.source || "HỆ THỐNG");
                 }
             }
         })
-        .catch(e => console.log("Đang đợi dữ liệu khách thật..."));
-    }, 5000); // 5 giây kiểm tra một lần cho nóng
+        .catch(e => {
+            // Lỗi này thường do internet hoặc chưa có khách nào trên database
+            console.log("Đang quét tín nguồn khách...");
+        });
+    }, 3000); // 3 giây quét một lần để đảm bảo tài xế nhận cuốc nhanh nhất
 }
 
-// 2. HÀM HIỂN THỊ THÔNG BÁO (DÙNG CHUNG CHO THẬT VÀ ẢO)
-function showGuest(phone, dest, isReal = false) {
+// 2. HÀM HIỂN THỊ CUỐC XE THẬT
+function showRealGuest(phone, dest, source) {
     const box = document.getElementById('custAlert');
     const info = document.getElementById('custInfo');
     
     if (box && info) {
-        const tagColor = isReal ? "#ff4d4d" : "#ffc107";
-        const tagName = isReal ? "🔥 KHÁCH THẬT (FB/ZALO)" : "⭐ HỆ THỐNG DÒ TÌM";
-        
+        // Giao diện tập trung vào số điện thoại và điểm đến thực tế
         info.innerHTML = `
-            <div style="border-bottom: 1px dotted rgba(255,255,255,0.2); padding-bottom:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                <span style="background:${tagColor}; color:#fff; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:bold;">${tagName}</span>
-                <span style="font-size:10px; color:#aaa;">Vừa xong</span>
+            <div style="border-bottom: 1px solid #ff4d4d; padding-bottom:8px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="background:#ff4d4d; color:#fff; padding:3px 10px; border-radius:8px; font-size:11px; font-weight:bold;">📍 KHÁCH THẬT</span>
+                <span style="font-size:10px; color:#aaa;">Nguồn: ${source}</span>
             </div>
-            <div style="font-size: 1.1em; line-height: 1.6;">
-                <div style="margin-bottom:5px;">
-                    <span style="color:#aaa; font-size:0.9em;">Liên hệ:</span> 
-                    <a href="tel:${phone}" style="color:#00bfa5; font-size:1.5em; text-decoration:none; font-weight:900; margin-left:5px;">📞 ${phone}</a>
+            <div style="font-size: 1.1em; line-height: 1.8;">
+                <div style="margin-bottom:8px;">
+                    <span style="color:#aaa; font-size:0.9em;">Số điện thoại:</span><br>
+                    <a href="tel:${phone}" style="color:#00bfa5; font-size:1.6em; text-decoration:none; font-weight:900; letter-spacing:1px;">📞 ${phone}</a>
                 </div>
                 <div>
-                    <span style="color:#aaa; font-size:0.9em;">Điểm đón:</span> 
-                    <span style="color:#fff; font-weight:bold; margin-left:5px;">${dest}</span>
+                    <span style="color:#aaa; font-size:0.9em;">Điểm đón khách:</span><br>
+                    <span style="color:#fff; font-weight:bold; font-size:1.2em;">${dest}</span>
                 </div>
             </div>
+            <div style="margin-top:15px; background:rgba(0,191,165,0.1); padding:8px; border-radius:10px; text-align:center;">
+                <span style="color:#00bfa5; font-size:11px;">✅ Tài xế liên hệ ngay để chốt khách</span>
+            </div>
         `;
+        
         box.style.display = 'block';
         
-        // Rung máy báo hiệu
-        if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-        
-        // Chuông báo (nếu muốn)
-        console.log("Nổ cuốc: " + phone);
+        // Rung mạnh báo hiệu có khách thật
+        if (navigator.vibrate) {
+            navigator.vibrate([500, 110, 500, 110, 500]);
+        }
     }
 }
 
-// 3. VÒNG LẶP KHÁCH MÔ PHỎNG (ĐỂ APP LUÔN CÓ VIỆC)
-function startAutoHunter() {
-    let delay = Math.floor(Math.random() * (AI_CONFIG.maxWait - AI_CONFIG.minWait + 1)) + AI_CONFIG.minWait;
-    
-    setTimeout(() => {
-        // Chỉ nổ khách ảo nếu popup đang đóng (không đè lên khách thật)
-        const box = document.getElementById('custAlert');
-        if (box && box.style.display !== 'block') {
-            const pre = AI_CONFIG.phonePrefix[Math.floor(Math.random() * AI_CONFIG.phonePrefix.length)];
-            const num = Math.floor(1000000 + Math.random() * 9000000).toString().substring(0,7);
-            const phone = pre + num;
-            const dest = AI_CONFIG.points[Math.floor(Math.random() * AI_CONFIG.points.length)];
-            
-            showGuest(phone, dest, false);
-        }
-        startAutoHunter();
-    }, delay);
-}
-
-// 4. KHỞI CHẠY HỆ THỐNG
-watchRealGuest(); // Bật canh khách thật
-startAutoHunter(); // Bật quét khách ảo xen kẽ
+// 3. KHỞI CHẠY DUY NHẤT HÀM CANH KHÁCH THẬT
+watchRealGuest();
