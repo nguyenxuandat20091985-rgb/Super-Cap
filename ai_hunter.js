@@ -1,4 +1,4 @@
-// AI THỢ SĂN KHÁCH V4.5 - CHỐT ĐƠN QUA ĐIỆN THOẠI
+// AI THỢ SĂN KHÁCH V4.6 - PHIÊN BẢN CHỐNG ẢO - ANHHAIC2
 const AI_CONFIG = {
     minWait: 30000, // 30 giây nổ cuốc nhanh nhất
     maxWait: 120000, // 2 phút nổ cuốc chậm nhất
@@ -6,19 +6,19 @@ const AI_CONFIG = {
     points: [
         "Cầu Bãi Cháy", "Chợ Hạ Long 2", "Bệnh viện Tỉnh", 
         "Khu Mon Bay", "Cột 8", "Cảng Cái Lân", "Big C Hạ Long", 
-        "Vinpearl Đảo Rều", "Sun World", "Bãi tắm Hòn Gai"
+        "Vinpearl Đảo Rều", "Sun World", "Bãi tắm Hòn Gai",
+        "Chợ Đêm Hạ Long", "Bảo tàng Quảng Ninh"
     ]
 };
 
-// 1. Hàm tự động định vị lại khi vào app
+// 1. Hàm đồng bộ vị trí (Giữ bản đồ luôn theo sát tài xế)
 function refreshLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 if(typeof map !== 'undefined') {
-                    const myLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                    map.setCenter(myLoc);
-                    if(typeof marker !== 'undefined') marker.setPosition(myLoc);
+                    const myLoc = [pos.coords.latitude, pos.coords.longitude];
+                    map.panTo(myLoc);
                     console.log("Đã cập nhật vị trí chuẩn!");
                 }
             },
@@ -28,14 +28,14 @@ function refreshLocation() {
     }
 }
 
-// 2. Tạo SĐT ngẫu nhiên
+// 2. Tạo SĐT ngẫu nhiên chuẩn Việt Nam
 function getPhone() {
     let pre = AI_CONFIG.phonePrefix[Math.floor(Math.random() * AI_CONFIG.phonePrefix.length)];
     let num = Math.floor(1000000 + Math.random() * 9000000).toString().substring(0,7);
     return pre + num;
 }
 
-// 3. Vòng lặp sàn giao dịch
+// 3. Vòng lặp sàn giao dịch săn khách
 function startMarket() {
     let delay = Math.floor(Math.random() * (AI_CONFIG.maxWait - AI_CONFIG.minWait + 1)) + AI_CONFIG.minWait;
     
@@ -47,24 +47,34 @@ function startMarket() {
         const info = document.getElementById('custInfo');
         
         if (box && info) {
-            // Hiển thị SĐT dạng link tel: để ấn là gọi
+            // Giao diện chuyên nghiệp: Icon lửa + SĐT nổi bật + Không còn dòng chữ hướng dẫn thừa
             info.innerHTML = `
-                <div style="border-bottom: 1px solid #444; padding-bottom:5px; margin-bottom:5px;">
-                    <b style="color:#2ecc71;">📢 CÓ KHÁCH MỚI!</b>
+                <div style="border-bottom: 1px dotted rgba(255,255,255,0.2); padding-bottom:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="background:#ffc107; color:#000; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🔥 CUỐC XE MỚI</span>
+                    <span style="font-size:10px; color:#aaa;">Vừa xong</span>
                 </div>
-                <div style="font-size: 1.1em;">
-                    <b>Khách:</b> <a href="tel:${phone}" style="color:#ffc107; text-decoration:none; font-weight:bold; font-size:1.3em;">📞 ${phone}</a><br>
-                    <b>Điểm đến:</b> ${dest}
+                <div style="font-size: 1.1em; line-height: 1.6;">
+                    <div style="margin-bottom:5px;">
+                        <span style="color:#aaa; font-size:0.9em;">Khách:</span> 
+                        <a href="tel:${phone}" style="color:#00bfa5; font-size:1.4em; text-decoration:none; font-weight:900; margin-left:5px;">📞 ${phone}</a>
+                    </div>
+                    <div>
+                        <span style="color:#aaa; font-size:0.9em;">Đến:</span> 
+                        <span style="color:#fff; font-weight:bold; margin-left:5px;">${dest}</span>
+                    </div>
                 </div>
-                <div style="margin-top:5px; font-size:0.8em; color:#aaa;">(Ấn vào số điện thoại để gọi làm giá)</div>
             `;
             box.style.display = 'block';
+            
+            // Rung máy để báo hiệu có khách (chỉ hoạt động trên Android)
             if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
         }
-        startMarket();
+        
+        // Gọi lại vòng lặp để tiếp tục săn khách
+        startMarket(); 
     }, delay);
 }
 
-// Khởi chạy
+// Kích hoạt khi tải trang
 refreshLocation();
 startMarket();
