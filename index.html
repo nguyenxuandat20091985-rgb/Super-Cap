@@ -4,135 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SUPER-CAP V2 - ANHHAIC2</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
         :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --danger: #ff5252; --bg: #f8faf9; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); overflow: hidden; }
-        
-        /* Bản đồ */
         #map { height: 100vh; width: 100vw; z-index: 1; }
-
-        /* Thanh trạng thái phía trên */
         .header { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 1000; }
-        .badge { background: rgba(255,255,255,0.9); padding: 8px 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 11px; font-weight: 800; border: 1px solid white; }
-
-        /* Form đăng ký khi mới vào */
-        .auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
-        .auth-card { background: white; padding: 30px; border-radius: 25px; width: 85%; max-width: 350px; color: var(--dark); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .auth-card input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; }
-        .btn-start { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: 900; font-size: 16px; cursor: pointer; }
-
-        /* Bảng điều khiển phía dưới */
-        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 25px 25px 0 0; padding: 15px; text-align: center; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
-        .nav-grid { display: flex; justify-content: space-around; margin-top: 10px; }
+        .badge { background: rgba(255,255,255,0.95); padding: 8px 15px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 11px; font-weight: 800; border: 1px solid white; }
+        
+        /* Menu Nạp VIP Đẹp */
+        .vip-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 4000; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 50px; }
+        .vip-header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 25px 25px; }
+        .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+        .vip-card { background: white; border: 2px solid #eee; border-radius: 18px; padding: 15px; text-align: center; position: relative; }
+        .vip-card b { font-size: 14px; color: var(--dark); display: block; }
+        .vip-card span { color: var(--primary); font-weight: 800; font-size: 16px; }
+        .vip-card ul { padding: 0; list-style: none; font-size: 9px; color: #7f8c8d; margin: 10px 0; }
+        .btn-pay { width: 100%; padding: 8px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 12px; }
+        
+        .footer-panel { position: fixed; bottom: 0; left: 0; right: 0; background: white; z-index: 2000; border-radius: 25px 25px 0 0; padding: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+        .nav-grid { display: flex; justify-content: space-around; }
         .nav-item { border: none; background: none; color: #bdc3c7; font-size: 10px; font-weight: 700; flex: 1; }
         .nav-item.active { color: var(--primary); }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 2px; font-style: normal; }
 
-        /* Modal nạp tiền */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; display: none; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; max-width: 350px; padding: 20px; border-radius: 20px; position: relative; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5000; display: none; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 85%; padding: 20px; border-radius: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div id="authOverlay" class="auth-overlay" style="display: none;">
-        <div class="auth-card">
-            <h2 style="color: var(--primary);">SUPER-CAP V2</h2>
-            <p>Vui lòng đăng ký để bắt đầu săn khách</p>
-            <input type="number" id="regPhone" placeholder="Số điện thoại">
-            <input type="text" id="regPlate" placeholder="Biển số xe (Ví dụ: 30A-12345)">
-            <button class="btn-start" onclick="handleRegister()">BẮT ĐẦU NGAY</button>
+    <div class="header">
+        <div class="badge" id="idDisplay">🆔 SC-GUEST</div>
+        <div class="badge" id="vipDisplay" style="color:var(--gold)">⭐ GÓI: FREE</div>
+    </div>
+    <div id="map"></div>
+
+    <div id="vipMenu" class="vip-menu">
+        <div class="vip-header">
+            <h2 style="margin:0">NÂNG CẤP VIP</h2>
+            <p style="font-size: 12px; opacity: 0.9;">Tăng tốc độ săn khách AI</p>
+            <button onclick="document.getElementById('vipMenu').style.display='none'" style="position:absolute; top:15px; left:15px; background:none; border:none; color:white; font-size:20px;">✕</button>
+        </div>
+        
+        <div class="vip-grid">
+            <div class="vip-card">
+                <b>CHUYẾN LẺ</b><span>5.000đ</span>
+                <ul><li>✅ Dùng trong 24h</li><li>✅ GPS Bù điểm sóng</li></ul>
+                <button class="btn-pay" onclick="createQR(5000, 'CHUYEN LE')">NẠP NGAY</button>
+            </div>
+            <div class="vip-card" style="border-color: var(--primary);">
+                <div style="position:absolute; top:-10px; right:10px; background:var(--gold); color:white; font-size:8px; padding:2px 5px; border-radius:5px;">PHỔ BIẾN</div>
+                <b>GÓI PRO</b><span>49.000đ</span>
+                <ul><li>✅ Dùng 30 ngày</li><li>✅ Radar tìm khách</li></ul>
+                <button class="btn-pay" onclick="createQR(49000, 'GOI PRO')">NẠP NGAY</button>
+            </div>
+            <div class="vip-card">
+                <b>PRO MAX</b><span>129.000đ</span>
+                <ul><li>✅ Dùng 90 ngày</li><li>✅ Trợ lý AI đặc quyền</li></ul>
+                <button class="btn-pay" onclick="createQR(129000, 'PRO MAX')">NẠP NGAY</button>
+            </div>
+            <div class="vip-card" style="background: #f0fffb;">
+                <b>DÙNG THỬ</b><span>0đ</span>
+                <ul><li>✅ Trải nghiệm 7 ngày</li><li>✅ Đầy đủ tính năng</li></ul>
+                <button class="btn-pay" style="background:#666" onclick="alert('Anh đã dùng gói này rồi!')">ĐÃ DÙNG</button>
+            </div>
         </div>
     </div>
 
-    <div class="header">
-        <div class="badge" id="idDisplay">🆔 SC-GUEST</div>
-        <div class="badge" id="vipDisplay" style="color:var(--gold)">⭐ VIP: FREE</div>
-    </div>
-
-    <div id="map"></div>
-
     <div class="footer-panel">
-        <div id="statusText" style="font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 5px;">HỆ THỐNG ĐANG QUÉT KHÁCH...</div>
         <div class="nav-grid">
-            <button class="nav-item active" onclick="alert('Đang ở trang chủ')"><i>🏠</i>Trang chủ</button>
-            <button class="nav-item" onclick="openPayment()"><i>💰</i>Nạp VIP</button>
+            <button class="nav-item active" onclick="document.getElementById('vipMenu').style.display='none'"><i>🏠</i>Trang chủ</button>
+            <button class="nav-item" onclick="document.getElementById('vipMenu').style.display='flex'"><i>💰</i>Nạp VIP</button>
             <button class="nav-item" onclick="location.reload()"><i>🔄</i>Làm mới</button>
         </div>
     </div>
 
-    <div id="payModal" class="modal" onclick="this.style.display='none'">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 style="text-align:center">NÂNG CẤP VIP3 (300K)</h3>
-            <p style="font-size: 12px; text-align: center;">Quét mã để kích hoạt săn khách AI cao cấp</p>
-            <img id="qrImg" src="" style="width: 100%; border: 5px solid #f0f0f0; border-radius: 10px;">
-            <p style="text-align:center; font-weight: bold; color: var(--primary);">Nội dung: <span id="payCode"></span></p>
-            <button class="btn-start" onclick="document.getElementById('payModal').style.display='none'">ĐÃ CHUYỂN KHOẢN</button>
+    <div id="payModal" class="modal">
+        <div class="modal-content">
+            <h3 id="payTitle">NẠP GÓI</h3>
+            <img id="qrImg" src="" style="width: 100%; border-radius: 10px;">
+            <p style="font-weight: bold; color: var(--primary);">Nội dung: <span id="payCode"></span></p>
+            <button class="btn-pay" style="padding:15px" onclick="document.getElementById('payModal').style.display='none'">ĐÃ CHUYỂN KHOẢN</button>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script>
-        // 1. THÔNG TIN CẤU HÌNH (BIDV CỦA ANH ĐẠT)
         const MY_STK = "4430269669";
         const MY_NAME = "NGUYEN XUAN DAT";
+        let userData = JSON.parse(localStorage.getItem('sc_user')) || {id: "SC"+Math.floor(1000+Math.random()*9000), vip: "FREE"};
 
-        // 2. KHỞI TẠO APP
-        let userData = JSON.parse(localStorage.getItem('sc_user'));
-        var map = L.map('map', { zoomControl: false }).setView([21.02, 105.83], 13);
+        var map = L.map('map', { zoomControl: false }).setView([20.95, 107.07], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        window.onload = function() {
-            if(!userData) {
-                document.getElementById('authOverlay').style.display = 'flex';
-            } else {
-                showApp();
-            }
-        };
+        document.getElementById('idDisplay').innerText = "🆔 " + userData.id;
 
-        // 3. XỬ LÝ ĐĂNG KÝ
-        function handleRegister() {
-            const phone = document.getElementById('regPhone').value;
-            const plate = document.getElementById('regPlate').value;
-            if(phone.length < 10) return alert("Số điện thoại không đúng!");
-
-            userData = {
-                id: 'SC' + Math.floor(1000 + Math.random() * 9000),
-                phone: phone,
-                plate: plate,
-                vip: "FREE"
-            };
-            localStorage.setItem('sc_user', JSON.stringify(userData));
-            document.getElementById('authOverlay').style.display = 'none';
-            showApp();
-        }
-
-        function showApp() {
-            document.getElementById('idDisplay').innerText = "🆔 " + userData.id;
-            document.getElementById('vipDisplay').innerText = "⭐ VIP: " + userData.vip;
-            
-            // Lấy vị trí GPS thật
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(p => {
-                    const lat = p.coords.latitude;
-                    const lng = p.coords.longitude;
-                    map.setView([lat, lng], 15);
-                    L.marker([lat, lng]).addTo(map).bindPopup("Vị trí của anh").openPopup();
-                });
-            }
-        }
-
-        // 4. XỬ LÝ NẠP TIỀN
-        function openPayment() {
-            const amount = 300000; // Mặc định gói VIP3
-            const code = "NAP VIP3 " + userData.id;
+        function createQR(amount, planName) {
+            const code = `NAP ${planName.replace(' ','')} ${userData.id}`;
+            document.getElementById('payTitle').innerText = planName + " (" + amount.toLocaleString() + "đ)";
             document.getElementById('payCode').innerText = code;
             
-            // Tạo link VietQR chuẩn
             const qrUrl = `https://img.vietqr.io/image/BIDV-${MY_STK}-compact2.png?amount=${amount}&addInfo=${code}&accountName=${MY_NAME}`;
             document.getElementById('qrImg').src = qrUrl;
             document.getElementById('payModal').style.display = 'flex';
