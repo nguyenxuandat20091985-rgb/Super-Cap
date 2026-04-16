@@ -3,67 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPER CAP 2026 - ANH HAI SM</title>
+    <title>SUPER CAP 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #050f12; color: #00f2ff; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
-        .radar-container { 
-            width: 250px; height: 250px; border: 2px solid #004d55; border-radius: 50%; 
-            margin: 20px auto; position: relative; background: radial-gradient(circle, #002d32 0%, #050f12 80%);
-        }
-        .scan-line { 
-            width: 50%; height: 2px; background: linear-gradient(to right, rgba(0,255,255,0), #00f2ff); 
-            position: absolute; top: 50%; left: 50%; transform-origin: left center; animation: scan 2s linear infinite; 
-        }
+        .radar { width: 250px; height: 250px; border: 2px solid #004d55; border-radius: 50%; margin: 20px auto; position: relative; background: radial-gradient(circle, #002d32 0%, #050f12 80%); }
+        .line { width: 50%; height: 2px; background: linear-gradient(to right, transparent, #00f2ff); position: absolute; top: 50%; left: 50%; transform-origin: left center; animation: scan 2s linear infinite; }
         @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .status-box { background: #101d23; padding: 15px; border-radius: 15px; border: 1px solid #004d55; margin-top: 10px; }
-        .customer-item { 
-            background: #002d32; padding: 12px; margin: 10px 0; border-radius: 8px; 
-            border-left: 5px solid #ffeb3b; text-align: left;
-        }
+        .box { background: #101d23; padding: 15px; border-radius: 15px; border: 1px solid #004d55; margin-top: 10px; }
+        .item { background: #002d32; padding: 12px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #ffeb3b; text-align: left; animation: nổ 0.5s ease; }
+        @keyframes nổ { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
-    <h2 style="text-shadow: 0 0 10px #00f2ff;">📡 SUPER CAP 2026</h2>
-    <div class="radar-container"><div class="scan-line"></div></div>
-    <div class="status-box">
-        <p>Trạng thái: <span id="status-text" style="color: #4caf50;">ĐANG QUÉT...</span></p>
-        <h3 style="margin: 5px 0;">🎯 KHÁCH ĐANG CHỜ</h3>
-        <div id="customer-list">Đang tìm cuốc quanh đây...</div>
+    <h2 style="text-shadow: 0 0 10px #00f2ff;">📡 RADAR SUPER CAP 2026</h2>
+    <div class="radar"><div class="line"></div></div>
+    <div class="box">
+        <p>📡 Trạng thái: <span id="status" style="color: #4caf50;">ĐANG QUÉT KHÁCH...</span></p>
+        <h3 style="margin: 5px 0;"><i class="fas fa-bolt"></i> CUỐC MỚI NỔ</h3>
+        <div id="list">Đang đợi tín hiệu từ Firebase...</div>
     </div>
 
     <script>
-        // Link Firebase chuẩn của anh Đạt
-        const FB_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
-        
-        async function fetchCustomers() {
+        const URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
+        async function load() {
             try {
-                const res = await fetch(FB_URL);
-                const data = await res.json();
-                const list = document.getElementById('customer-list');
-                const status = document.getElementById('status-text');
-                
-                if (data) {
-                    status.innerText = "ĐANG HOẠT ĐỘNG";
-                    list.innerHTML = "";
-                    Object.keys(data).reverse().forEach(k => {
-                        const item = document.createElement('div');
-                        item.className = 'customer-item';
-                        item.innerHTML = `<strong>🚕 KHÁCH:</strong> ${data[k].info || 'Cuốc mới'}`;
-                        list.appendChild(item);
+                const r = await fetch(URL);
+                const d = await r.json();
+                const l = document.getElementById('list');
+                if (d) {
+                    l.innerHTML = "";
+                    Object.keys(d).reverse().forEach(k => {
+                        l.innerHTML += `<div class="item"><strong>🚕 KHÁCH:</strong> ${d[k].info || 'Cuốc nổ từ hệ thống'}</div>`;
                     });
-                } else { 
-                    status.innerText = "RADAR TRỐNG";
-                    list.innerHTML = "Chưa có cuốc mới..."; 
-                }
-            } catch (e) { 
-                document.getElementById('status-text').innerText = "LỖI KẾT NỐI"; 
-            }
+                } else { l.innerHTML = "Chưa có cuốc mới..."; }
+            } catch (e) { document.getElementById('status').innerText = "LỖI KẾT NỐI"; }
         }
-        
-        // Tự động cập nhật mỗi 3 giây
-        setInterval(fetchCustomers, 3000);
-        fetchCustomers();
+        setInterval(load, 3000); load();
     </script>
 </body>
 </html>
