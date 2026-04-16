@@ -6,144 +6,50 @@
     <title>SUPER CAP 2026 - ANH HAI SM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --main-color: #00f2ff;
-            --bg-color: #050f12;
-            --panel-bg: #101d23;
-        }
-        body { 
-            background-color: var(--bg-color); 
-            color: var(--main-color); 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            margin: 0; 
-            padding: 10px;
-            overflow-x: hidden;
-        }
-        .header { margin: 15px 0; text-shadow: 0 0 10px var(--main-color); }
-        h1 { font-size: 1.8rem; margin: 0; letter-spacing: 2px; }
-        
-        /* Hiệu ứng Radar chuyên nghiệp */
+        body { background-color: #050f12; color: #00f2ff; font-family: sans-serif; text-align: center; margin: 0; padding: 10px; }
         .radar-container { 
-            width: 280px; height: 280px; 
-            border: 2px solid #004d55; 
-            border-radius: 50%; 
-            margin: 20px auto; 
-            position: relative; 
-            background: radial-gradient(circle, #002d32 0%, #050f12 80%);
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.1);
-        }
-        /* Vòng tròn đồng tâm */
-        .radar-container::before {
-            content: ""; position: absolute; top: 50%; left: 50%; width: 66%; height: 66%;
-            border: 1px solid rgba(0, 242, 255, 0.1); border-radius: 50%; transform: translate(-50%, -50%);
-        }
-        .radar-container::after {
-            content: ""; position: absolute; top: 50%; left: 50%; width: 33%; height: 33%;
-            border: 1px solid rgba(0, 242, 255, 0.1); border-radius: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; border: 2px solid #004d55; border-radius: 50%; 
+            margin: 20px auto; position: relative; background: radial-gradient(circle, #002d32 0%, #050f12 80%);
         }
         .scan-line { 
-            width: 50%; height: 3px; 
-            background: linear-gradient(to right, rgba(0,255,255,0), var(--main-color)); 
-            position: absolute; top: 50%; left: 50%; 
-            transform-origin: left center; 
-            animation: scan 2s linear infinite; 
-            z-index: 2;
+            width: 50%; height: 2px; background: linear-gradient(to right, rgba(0,255,255,0), #00f2ff); 
+            position: absolute; top: 50%; left: 50%; transform-origin: left center; animation: scan 2s linear infinite; 
         }
         @keyframes scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Bảng điều khiển */
-        .status-box { 
-            background: var(--panel-bg); 
-            padding: 15px; 
-            border-radius: 15px; 
-            margin-top: 10px; 
-            border: 1px solid #004d55;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-        .status-header { display: flex; justify-content: center; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 10px; }
-        #status-text { color: #4caf50; }
-        
-        /* Danh sách khách hàng */
-        #customer-list { min-height: 100px; }
+        .status-box { background: #101d23; padding: 15px; border-radius: 15px; border: 1px solid #004d55; margin-top: 10px; }
         .customer-item { 
-            background: #002d32; 
-            padding: 12px; 
-            margin: 10px 0; 
-            border-radius: 8px; 
-            border-left: 5px solid #ffeb3b; 
-            text-align: left; 
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            background: #002d32; padding: 12px; margin: 10px 0; border-radius: 8px; 
+            border-left: 5px solid #ffeb3b; text-align: left;
         }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-        .cust-info { color: #fff; font-size: 1.1rem; }
-        .cust-time { font-size: 0.8rem; color: #80deea; display: block; margin-top: 5px; }
-
-        .empty-msg { opacity: 0.6; padding-top: 20px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fas fa-satellite-dish"></i> SUPER CAP 2026</h1>
-        <p style="font-size: 0.9rem; margin-top: 5px;">HỆ THỐNG TRỢ LÝ TÀI XẾ ANH HAI SM</p>
-    </div>
-    
-    <div class="radar-container">
-        <div class="scan-line"></div>
-    </div>
-
+    <h2 style="text-shadow: 0 0 10px #00f2ff;">📡 SUPER CAP 2026</h2>
+    <div class="radar-container"><div class="scan-line"></div></div>
     <div class="status-box">
-        <div class="status-header">
-            <i class="fas fa-wifi"></i>
-            Trạng thái: <span id="status-text">ĐANG KẾT NỐI...</span>
-        </div>
-        <hr style="border: 0; border-top: 1px solid #004d55;">
-        <h3 style="margin: 10px 0;"><i class="fas fa-crosshairs"></i> KHÁCH ĐANG CHỜ (THỰC TẾ)</h3>
-        <div id="customer-list">
-            <p class="empty-msg">Đang khởi động hệ thống quét...</p>
-        </div>
+        <p>Trạng thái: <span id="status-text" style="color: #4caf50;">ĐANG QUÉT...</span></p>
+        <h3 style="margin: 5px 0;">🎯 KHÁCH ĐANG CHỜ</h3>
+        <div id="customer-list">Đang tìm cuốc quanh đây...</div>
     </div>
 
     <script>
-        // Link Firebase của anh Đạt
         const FB_URL = "https://super-cap-anh-hai-default-rtdb.asia-southeast1.firebasedatabase.app/customers.json";
-
         async function fetchCustomers() {
             try {
-                const response = await fetch(FB_URL);
-                const data = await response.json();
+                const res = await fetch(FB_URL);
+                const data = await res.json();
                 const list = document.getElementById('customer-list');
-                const status = document.getElementById('status-text');
-                
-                if (data && Object.keys(data).length > 0) {
-                    status.innerText = "RADAR ĐANG HOẠT ĐỘNG";
-                    status.style.color = "#4caf50";
+                if (data) {
                     list.innerHTML = "";
-                    
-                    // Sắp xếp khách mới nhất lên đầu
-                    Object.keys(data).reverse().forEach(key => {
+                    Object.keys(data).reverse().forEach(k => {
                         const item = document.createElement('div');
                         item.className = 'customer-item';
-                        item.innerHTML = `
-                            <div class="cust-info"><strong><i class="fas fa-car-side"></i> MỚI:</strong> ${data[key].info}</div>
-                            <span class="cust-time"><i class="far fa-clock"></i> Cập nhật ngay bây giờ</span>
-                        `;
+                        item.innerHTML = `<strong>🚕 KHÁCH:</strong> ${data[k].info || 'Cuốc mới'}`;
                         list.appendChild(item);
                     });
-                } else {
-                    status.innerText = "RADAR TRỐNG";
-                    status.style.color = "#ffeb3b";
-                    list.innerHTML = '<p class="empty-msg">Chưa có cuốc mới quanh đây, đang chờ nổ...</p>';
-                }
-            } catch (error) {
-                console.error("Lỗi:", error);
-                document.getElementById('status-text').innerText = "LỖI KẾT NỐI";
-                document.getElementById('status-text').style.color = "#f44336";
-            }
+                } else { list.innerHTML = "Chưa có cuốc mới..."; }
+            } catch (e) { document.getElementById('status-text').innerText = "LỖI KẾT NỐI"; }
         }
-
-        // Tự động quét 3 giây một lần
         setInterval(fetchCustomers, 3000);
         fetchCustomers();
     </script>
