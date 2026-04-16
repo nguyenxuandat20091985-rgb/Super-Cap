@@ -3,60 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SUPER-CAP V2.5 - ANHHAIC2</title>
+    <title>SUPER-CAP V2.6 - ANHHAIC2</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --bg: #f4f7f6; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; background: var(--bg); }
+        :root { --primary: #00bfa5; --dark: #002d26; --gold: #ffc107; --bg: #f5f8f7; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; overflow: hidden; background: var(--bg); }
         #map { height: 100vh; width: 100vw; z-index: 1; }
 
-        /* CHẤM XANH HD */
+        /* CHẤM XANH HOẠT ĐỘNG */
         .pulse-marker {
-            width: 18px; height: 18px; background: #007aff;
-            border: 3px solid white; border-radius: 50%;
-            position: relative; box-shadow: 0 0 15px rgba(0,122,255,0.6);
+            width: 22px; height: 22px; background: var(--primary);
+            border: 4px solid white; border-radius: 50%;
+            position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.3);
         }
         .pulse-marker::after {
             content: ""; position: absolute; inset: -12px;
-            border: 2px solid #007aff; border-radius: 50%;
-            animation: pulse-ring 2s infinite;
+            border: 3px solid var(--primary); border-radius: 50%;
+            animation: pulse-ring 1.8s infinite;
         }
-        @keyframes pulse-ring { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+        @keyframes pulse-ring { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
 
-        /* UI COMPONENTS */
-        .header { position: fixed; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 1000; }
-        .badge { background: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 11px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; }
-        
-        .footer { position: fixed; bottom: 0; inset-x: 0; background: white; z-index: 2000; padding: 15px 15px 25px 15px; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); }
-        .nav { display: flex; justify-content: space-around; }
-        .nav-item { border: none; background: none; flex: 1; font-size: 11px; font-weight: bold; color: #999; outline: none; }
+        /* HEADER UI */
+        .header { position: fixed; top: env(safe-area-inset-top, 15px); left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 1000; }
+        .badge { background: white; padding: 10px 18px; border-radius: 25px; font-weight: bold; font-size: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.12); }
+
+        /* FOOTER XANH SM STYLE */
+        .footer { position: fixed; bottom: 0; inset-x: 0; background: white; z-index: 2000; padding: 18px 18px 30px 18px; border-radius: 30px 30px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.1); }
+        .nav { display: flex; justify-content: space-around; text-align: center; }
+        .nav-item { border: none; background: none; flex: 1; font-size: 11px; font-weight: bold; color: #b1bcc7; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 22px; display: block; margin-bottom: 4px; font-style: normal; }
+        .nav-item i { font-size: 26px; display: block; margin-bottom: 5px; font-style: normal; }
 
-        /* BÁO KHÁCH */
+        /* BÁO KHÁCH TỐI GIẢN */
         .customer-alert {
-            position: fixed; top: 90px; left: 15px; right: 15px;
-            background: rgba(0, 45, 38, 0.95); color: white; padding: 20px;
-            border-radius: 20px; z-index: 3000; display: none;
-            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            position: fixed; top: 100px; left: 18px; right: 18px;
+            background: rgba(0, 45, 38, 0.96); color: white; padding: 22px;
+            border-radius: 22px; z-index: 3000; display: none;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
         }
 
-        /* MENU VIP CHI TIẾT */
-        .vip-menu { position: fixed; inset: 0; background: var(--bg); z-index: 4000; display: none; overflow-y: auto; padding-bottom: 40px; }
-        .vip-header { background: var(--primary); color: white; padding: 50px 20px 30px; text-align: center; border-radius: 0 0 40px 40px; }
-        .vip-card { background: white; margin: 15px 20px; padding: 25px; border-radius: 25px; text-align: left; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border: 2px solid transparent; }
-        .vip-card.active { border-color: var(--primary); }
-        .price-tag { font-size: 28px; font-weight: 900; color: var(--primary); margin: 10px 0; }
-        .benefit-list { margin: 15px 0; padding: 0; list-style: none; font-size: 13px; color: #555; }
-        .benefit-list li { margin-bottom: 8px; display: flex; align-items: center; }
-        .benefit-list li::before { content: "✓"; color: var(--primary); font-weight: bold; margin-right: 10px; }
-        
-        .btn-pay { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(0,191,165,0.3); }
+        /* MENU VIP */
+        .vip-menu { position: fixed; inset: 0; background: #fff; z-index: 4000; display: none; flex-direction: column; overflow-y: auto; padding-bottom: 30px; }
+        .vip-card { border: 2px solid #f0f0f0; margin: 15px 20px; padding: 20px; border-radius: 20px; text-align: center; }
+        .vip-card b { font-size: 16px; color: var(--dark); }
+        .vip-price { font-size: 26px; color: var(--primary); font-weight: 900; margin: 8px 0; }
+        .btn-pay { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 15px; font-weight: bold; font-size: 16px; }
 
         /* AUTH */
         .auth-screen { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: white; padding: 35px 25px; border-radius: 35px; width: 85%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
-        .auth-card input { width: 100%; padding: 16px; margin: 12px 0; border-radius: 15px; border: 1px solid #eee; background: #f9f9f9; box-sizing: border-box; }
+        .auth-card { background: white; padding: 35px; border-radius: 35px; width: 85%; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        .auth-card input { width: 100%; padding: 16px; margin: 12px 0; border-radius: 15px; border: 1px solid #ddd; outline: none; }
     </style>
 </head>
 <body>
@@ -64,20 +61,20 @@
     <div id="authScreen" class="auth-screen">
         <div class="auth-card">
             <h2 style="color:var(--primary); margin-bottom: 5px;">XANH SM PREMIUM</h2>
-            <p style="font-size: 13px; color: #888; margin-bottom: 20px;">Hệ thống hỗ trợ săn khách tầng cao</p>
+            <p style="font-size: 13px; color: #666; margin-bottom: 25px;">Hệ thống Super-Cap AI 2026</p>
             <input type="number" id="scPhone" placeholder="Số điện thoại tài xế">
             <input type="text" id="scPlate" placeholder="Biển số xe (VD: 14A-123.45)">
-            <button onclick="login()" style="width:100%; padding:18px; background:var(--primary); color:white; border:none; border-radius:18px; font-weight:bold; font-size: 16px;">BẮT ĐẦU SĂN KHÁCH</button>
+            <button onclick="login()" style="width:100%; padding:18px; background:var(--primary); color:white; border:none; border-radius:18px; font-weight:bold; font-size:16px;">ĐĂNG NHẬP HỆ THỐNG</button>
         </div>
     </div>
 
     <div class="customer-alert" id="custAlert">
         <div id="custInfo"></div>
-        <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#999; width:100%; margin-top:15px; font-size: 13px;">Bỏ qua</button>
+        <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:#888; width:100%; margin-top:15px; font-size: 12px;">Bỏ qua</button>
     </div>
 
     <div class="header">
-        <div class="badge" id="plateDisp">🆔 ĐANG CẬP NHẬT...</div>
+        <div class="badge" id="plateDisp">🆔 CẬP NHẬT...</div>
         <div class="badge" style="color:var(--gold)">🏆 GÓI: MIỄN PHÍ</div>
     </div>
 
@@ -85,8 +82,8 @@
 
     <div class="footer">
         <div style="text-align:center; font-size:12px; font-weight:bold; color:var(--primary); margin-bottom:12px; display: flex; align-items: center; justify-content: center;">
-            <span style="width:8px; height:8px; background:red; border-radius:50%; margin-right:8px; animation: blink 1s infinite;"></span>
-            RA ĐA ĐANG QUÉT KHÁCH XUNG QUANH...
+            <span style="width:8px; height:8px; background:red; border-radius:50%; margin-right:8px; animation: blink 1.5s infinite;"></span>
+            RA ĐA AI ĐANG QUÉT KHÁCH XUNG QUANH...
         </div>
         <div class="nav">
             <button class="nav-item active"><i>🏠</i>Trang chủ</button>
@@ -96,39 +93,30 @@
     </div>
 
     <div id="vipMenu" class="vip-menu">
-        <div class="vip-header">
-            <h2 style="margin:0">NÂNG CẤP TÀI KHOẢN</h2>
-            <p style="opacity: 0.9; font-size: 13px;">Nhận nhiều cuốc xe chất lượng hơn</p>
+        <div style="padding:50px 20px 30px; background:var(--primary); color:white; text-align:center; border-radius:0 0 35px 35px;">
+            <h2 style="margin:0">NÂNG CẤP VIP</h2>
             <button onclick="closeVip()" style="position:absolute; top:25px; left:20px; background:none; border:none; color:white; font-size:24px;">✕</button>
         </div>
-        
-        <div class="vip-card active">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>GÓI PRO (Cơ bản)</b>
-                <span style="background:#e8f5f3; color:var(--primary); padding:4px 10px; border-radius:10px; font-size:10px;">PHỔ BIẾN</span>
+        <div style="margin-top:20px">
+            <div class="vip-card" style="border-color:var(--primary)">
+                <b>GÓI PRO</b>
+                <div class="vip-price">49.000đ</div>
+                <ul style="text-align:left; font-size:13px; color:#666; margin:10px 0; padding-left:20px;">
+                    <li>Ưu tiên cuốc gần dưới 3km</li>
+                    <li>Hiển thị SĐT khách để gọi điện</li>
+                </ul>
+                <button class="btn-pay" onclick="pay(49000,'PRO')">NẠP NGAY</button>
             </div>
-            <div class="price-tag">49.000đ<span style="font-size:12px; color:#999; font-weight:normal;">/tháng</span></div>
-            <ul class="benefit-list">
-                <li>Hiển thị SĐT khách hàng trong bán kính 5km</li>
-                <li>Không giới hạn số lần gọi điện làm giá</li>
-                <li>Bản đồ HD cập nhật vị trí thời gian thực</li>
-            </ul>
-            <button class="btn-pay" onclick="pay(49000,'PRO')">NẠP GÓI PRO</button>
-        </div>
-
-        <div class="vip-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>GÓI PRO MAX (VIP)</b>
-                <span style="background:#fff8e1; color:#ffa000; padding:4px 10px; border-radius:10px; font-size:10px;">ƯU TIÊN</span>
+            <div class="vip-card">
+                <b>PRO MAX</b>
+                <div class="vip-price">129.000đ</div>
+                <ul style="text-align:left; font-size:13px; color:#666; margin:10px 0; padding-left:20px;">
+                    <li>Tất cả quyền lợi gói PRO</li>
+                    <li>Ưu tiên cuốc Sân bay, Đường dài</li>
+                    <li>AI lọc khách "thơm" nhất</li>
+                </ul>
+                <button class="btn-pay" style="background:#ffa000;" onclick="pay(129000,'PROMAX')">NẠP NGAY</button>
             </div>
-            <div class="price-tag">129.000đ<span style="font-size:12px; color:#999; font-weight:normal;">/tháng</span></div>
-            <ul class="benefit-list">
-                <li>Tất cả quyền lợi gói PRO</li>
-                <li><b>Ưu tiên hiện cuốc Sân Bay, Đường Dài</b></li>
-                <li>Hệ thống AI tự động lọc khách "thơm" nhất</li>
-                <li>Hỗ trợ kỹ thuật 24/7 từ AnhHaiC2</li>
-            </ul>
-            <button class="btn-pay" style="background:#ffa000;" onclick="pay(129000,'PROMAX')">NẠP GÓI PRO MAX</button>
         </div>
     </div>
 
@@ -140,9 +128,9 @@
 
         function initMap() {
             if (!map) {
-                // SỬ DỤNG LAYER GOOGLE MAPS HYBRID (VỆ TINH + ĐƯỜNG) CHO NÉT
-                map = L.map('map', { zoomControl: false, attributionControl: false }).setView(userLoc, 17);
-                L.tileLayer('http://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                // CHUYỂN SANG DÙNG LAYER BẢN ĐỒ GIAO THÔNG TỐI GIẢN (SẠCH & NÉT)
+                map = L.map('map', { zoomControl: false }).setView(userLoc, 16);
+                L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                     maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']
                 }).addTo(map);
             }
@@ -152,7 +140,7 @@
                     userLoc = [position.coords.latitude, position.coords.longitude];
                     map.panTo(userLoc);
                     if (!driverMarker) {
-                        const icon = L.divIcon({ className: '', html: '<div class="pulse-marker"></div>', iconSize: [20, 20] });
+                        const icon = L.divIcon({ className: '', html: '<div class="pulse-marker"></div>', iconSize: [22, 22] });
                         driverMarker = L.marker(userLoc, { icon: icon }).addTo(map);
                     } else {
                         driverMarker.setLatLng(userLoc);
@@ -165,6 +153,7 @@
             const p = document.getElementById('scPhone').value;
             const b = document.getElementById('scPlate').value;
             if(!p || !b) return alert("Anh nhập đủ SĐT và Biển số nhé!");
+            
             const userData = { phone: p, plate: b, time: new Date().toLocaleString() };
             fetch(FIREBASE_URL, { method: 'POST', body: JSON.stringify(userData) })
             .then(() => {
