@@ -1,0 +1,20 @@
+name: Super-Cap Auto Sync
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Tự động quét 10 phút một lần
+  workflow_dispatch: # Nút bấm để anh chạy tay ngay lập tức
+
+jobs:
+  run-radar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install requests pandas
+      - name: Execute Scanner
+        run: python bot_scanner.py
